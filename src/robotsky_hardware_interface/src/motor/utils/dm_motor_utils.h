@@ -68,7 +68,7 @@ float dm_uint_to_float(int x_int, float x_min, float x_max, int bits);
 int   dm_float_to_uint(float x_float, float x_min, float x_max, int bits);
 
 void dm_enable_motor_mode(can_frame& frame, uint16_t motor_id, uint16_t mode_id);
-void dm_disable_motor_mode(can_frame& frame, uint16_t motor_id);
+void dm_disable_motor_mode(can_frame& frame, uint16_t motor_id, uint16_t mode_id);
 void dm_mit_ctrl(can_frame& frame, uint16_t motor_id, float pos, float vel, float kp, float kd, float tau);
 void dm_pos_speed_ctrl(can_frame& frame, uint16_t motor_id, float pos, float vel);
 void dm_speed_ctrl(can_frame& frame, uint16_t motor_id, float vel);
