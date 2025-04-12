@@ -7,19 +7,42 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(rclcpp REQUIRED)
+
+find_package(spdlog REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 include_directories(
   src
 )
 
+add_library(srobot_motor_lib
+  src/motor/utils/cyber_gear_utils.cpp
+  src/motor/utils/lk_motor_utils.cpp
+  src/motor/utils/dm_motor_utils.cpp
+
+  # src/motor/motor_control.cpp
+)
+target_link_libraries(srobot_motor_lib
+  spdlog::spdlog
+  Eigen3::Eigen
+)
+ament_target_dependencies(srobot_motor_lib
+  rclcpp
+
+  # std_msgs
+  # sensor_msgs
+  # srobot_msg
+  # serial
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
+
   # the following line skips the linter which checks for copyrights
   # comment the line when a copyright and license is added to all source files
   set(ament_cmake_copyright_FOUND TRUE)
+
   # the following line skips cpplint (only works in a git repo)
   # comment the line when this package is in a git repo and when
   # a copyright and license is added to all source files

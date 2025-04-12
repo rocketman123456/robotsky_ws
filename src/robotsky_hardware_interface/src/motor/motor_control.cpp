@@ -1,5 +1,5 @@
 #include "motor/motor_control.h"
-#include "can/cyber_gear_utils.h"
+#include "motor/cyber_gear_utils.h"
 
 #include <spdlog/spdlog.h>
 

@@ -99,11 +99,11 @@ void dm_mit_ctrl(can_frame& frame, uint16_t motor_id, float pos, float vel, floa
 {
     uint16_t pos_tmp, vel_tmp, kp_tmp, kd_tmp, tor_tmp;
 
-    pos_tmp = float_to_uint(pos, DM_P_MIN, DM_P_MAX, 16);
-    vel_tmp = float_to_uint(vel, DM_V_MIN, DM_V_MAX, 12);
-    kp_tmp  = float_to_uint(kp, DM_KP_MIN, DM_KP_MAX, 12);
-    kd_tmp  = float_to_uint(kd, DM_KD_MIN, DM_KD_MAX, 12);
-    tor_tmp = float_to_uint(tau, DM_T_MIN, DM_T_MAX, 12);
+    pos_tmp = dm_float_to_uint(pos, DM_P_MIN, DM_P_MAX, 16);
+    vel_tmp = dm_float_to_uint(vel, DM_V_MIN, DM_V_MAX, 12);
+    kp_tmp  = dm_float_to_uint(kp, DM_KP_MIN, DM_KP_MAX, 12);
+    kd_tmp  = dm_float_to_uint(kd, DM_KD_MIN, DM_KD_MAX, 12);
+    tor_tmp = dm_float_to_uint(tau, DM_T_MIN, DM_T_MAX, 12);
 
     frame.can_id  = motor_id + DM_MIT_MODE;
     frame.can_dlc = 8;
@@ -162,7 +162,6 @@ void dm_pos_speed_ctrl(can_frame& frame, uint16_t motor_id, float pos, float vel
 void dm_speed_ctrl(can_frame& frame, uint16_t motor_id, float vel)
 {
     uint8_t* vbuf;
-    uint8_t  data[4];
 
     frame.can_id  = motor_id + DM_SPEED_MODE;
     frame.can_dlc = 4;
@@ -235,19 +234,19 @@ void dm_clear_err(can_frame& frame, uint16_t motor_id, uint16_t mode_id)
 *               状态、位置、速度、扭矩以及相关温度参数
 ************************************************************************
 **/
-void dm_decode(const can_frame& frame, dm_motor_data_t& data)
+void dm_decode(const can_frame& frame, dm_motor_fb_t& data)
 {
     // frame.can_id  = motor_id + mode_id;
     // frame.can_dlc = 8;
 
-    data.para.id    = (frame.data[0]) & 0x0F;
-    data.para.state = (frame.data[0]) >> 4;
-    data.para.p_int = (frame.data[1] << 8) | frame.data[2];
-    data.para.v_int = (frame.data[3] << 4) | (frame.data[4] >> 4);
-    data.para.t_int = ((frame.data[4] & 0xF) << 8) | frame.data[5];
-    data.para.pos   = uint_to_float(data.para.p_int, DM_P_MIN, DM_P_MAX, 16); // (-12.5,12.5)
-    data.para.vel   = uint_to_float(data.para.v_int, DM_V_MIN, DM_V_MAX, 12); // (-45.0,45.0)
-    data.para.tor   = uint_to_float(data.para.t_int, DM_T_MIN, DM_T_MAX, 12); // (-18.0,18.0)
-    data.para.Tmos  = (float)(frame.data[6]);
-    data.para.Tcoil = (float)(frame.data[7]);
+    data.id    = (frame.data[0]) & 0x0F;
+    data.state = (frame.data[0]) >> 4;
+    data.p_int = (frame.data[1] << 8) | frame.data[2];
+    data.v_int = (frame.data[3] << 4) | (frame.data[4] >> 4);
+    data.t_int = ((frame.data[4] & 0xF) << 8) | frame.data[5];
+    data.pos   = dm_uint_to_float(data.p_int, DM_P_MIN, DM_P_MAX, 16); // (-12.5,12.5)
+    data.vel   = dm_uint_to_float(data.v_int, DM_V_MIN, DM_V_MAX, 12); // (-45.0,45.0)
+    data.tor   = dm_uint_to_float(data.t_int, DM_T_MIN, DM_T_MAX, 12); // (-18.0,18.0)
+    data.t_mos  = (float)(frame.data[6]);
+    data.t_coil = (float)(frame.data[7]);
 }

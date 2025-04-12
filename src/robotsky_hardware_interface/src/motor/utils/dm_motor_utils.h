@@ -75,4 +75,4 @@ void dm_speed_ctrl(can_frame& frame, uint16_t motor_id, float vel);
 void dm_save_pos_zero(can_frame& frame, uint16_t motor_id, uint16_t mode_id);
 void dm_clear_err(can_frame& frame, uint16_t motor_id, uint16_t mode_id);
 
-void dm_decode(const can_frame& frame, dm_motor_data_t& data);
+void dm_decode(const can_frame& frame, dm_motor_fb_t& data);
