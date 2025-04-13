@@ -20,7 +20,7 @@ int main(int argc, char** argv)
 
     std::vector<can_init_info_t> can_infos;
 
-    can_infos.emplace_back("can1");
+    can_infos.emplace_back("can3");
 
     driver.initialize(can_infos);
 
@@ -30,22 +30,25 @@ int main(int argc, char** argv)
 
     dm_motor_fb_t data;
 
-    dm_enable_motor_mode(can_tx, can_id, DM_MIT_MODE);
-
+    for(int i = 0; i < 10; ++i)
     {
-        driver.send(can_id, can_tx);
-        usleep(50);
-        driver.receive(can_id, can_rx);
-    }
+        dm_enable_motor_mode(can_tx, can_id, DM_MIT_MODE);
 
-    dm_decode(can_rx, data);
+        {
+            driver.send(can_id, can_tx);
+            usleep(50);
+            driver.receive(can_id, can_rx);
+        }
+
+        dm_decode(can_rx, data);
+    }
 
     rclcpp::Rate loop_rate(100);
     try
     {
         while (rclcpp::ok())
         {
-            dm_mit_ctrl(can_tx, can_id, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+            dm_mit_ctrl(can_tx, can_id, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f);
 
             {
                 driver.send(can_id, can_tx);
@@ -55,7 +58,7 @@ int main(int argc, char** argv)
 
             dm_decode(can_rx, data);
 
-            spdlog::info("motor {} pos : {}", can_id, data.pos);
+            spdlog::info("motor {} pos : {}", data.id, data.pos);
 
             loop_rate.sleep();
         }

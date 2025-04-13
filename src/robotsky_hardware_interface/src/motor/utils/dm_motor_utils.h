@@ -14,6 +14,8 @@ constexpr uint16_t DM_MIT_MODE   = 0x000;
 constexpr uint16_t DM_POS_MODE   = 0x100;
 constexpr uint16_t DM_SPEED_MODE = 0x200;
 
+constexpr uint16_t DM_MASTER_ID = 0x40;
+
 constexpr float DM_P_MIN  = -12.5f;
 constexpr float DM_P_MAX  = 12.5f;
 constexpr float DM_V_MIN  = -30.0f;
