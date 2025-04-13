@@ -20,6 +20,7 @@ add_library(robotsky_motor_lib
   src/motor/utils/cyber_gear_utils.cpp
   src/motor/utils/lk_motor_utils.cpp
   src/motor/utils/dm_motor_utils.cpp
+  src/motor/utils/rs_motor_utils.cpp
   src/can/can_driver.cpp
 
   # src/motor/motor_control.cpp

@@ -59,6 +59,7 @@ void dm_enable_motor_mode(can_frame& frame, uint16_t motor_id, uint16_t mode_id)
 {
     frame.can_id  = motor_id + mode_id;
     frame.can_dlc = 8;
+    // frame.can_id |= CAN_EFF_FLAG;
 
     frame.data[0] = 0xFF;
     frame.data[1] = 0xFF;

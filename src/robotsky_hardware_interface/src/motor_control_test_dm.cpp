@@ -21,30 +21,52 @@ int main(int argc, char** argv)
 
     std::vector<can_init_info_t> can_infos;
 
-    can_infos.emplace_back("can3");
+    can_infos.emplace_back("can1");
 
     driver.initialize(can_infos);
 
     can_frame can_tx;
     can_frame can_rx;
-    uint16_t  can_id = 0x02;
+    uint16_t  can_id = 0x01;
 
-    rs_enable_motor_mode(can_tx, can_id);
+    dm_motor_fb_t data;
+
+    dm_clear_err(can_tx, can_id, DM_MIT_MODE);
+
     {
         driver.send(can_id, can_tx);
         usleep(50);
         driver.receive(can_id, can_rx);
     }
-    // dm_decode(can_rx, data);
 
-    spdlog::info("start");
+    dm_decode(can_rx, data);
+
+    dm_enable_motor_mode(can_tx, can_id, DM_MIT_MODE);
+
+    {
+        driver.send(can_id, can_tx);
+        usleep(50);
+        driver.receive(can_id, can_rx);
+    }
+
+    dm_decode(can_rx, data);
 
     rclcpp::Rate loop_rate(100);
     try
     {
         while (rclcpp::ok())
         {
-            //
+            dm_mit_ctrl(can_tx, can_id, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f);
+
+            {
+                driver.send(can_id, can_tx);
+                usleep(50);
+                driver.receive(can_id, can_rx);
+            }
+
+            dm_decode(can_rx, data);
+
+            spdlog::info("motor {} pos : {}", data.id, data.pos);
 
             loop_rate.sleep();
         }
@@ -54,13 +76,15 @@ int main(int argc, char** argv)
         spdlog::warn("runtime error!");
     }
 
-    rs_disable_motor_mode(can_tx, can_id, 0);
+    dm_disable_motor_mode(can_tx, can_id, DM_MIT_MODE);
+
     {
         driver.send(can_id, can_tx);
         usleep(50);
         driver.receive(can_id, can_rx);
     }
-    // dm_decode(can_rx, data);
+
+    dm_decode(can_rx, data);
 
     rclcpp::shutdown();
     return 0;
