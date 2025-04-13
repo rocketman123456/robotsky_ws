@@ -38,10 +38,20 @@ ament_target_dependencies(robotsky_motor_lib
   # serial
 )
 
-add_executable(motor_control_test
-  src/motor_control_test.cpp
+add_executable(motor_control_test_rs
+  src/motor_control_test_rs.cpp
 )
-target_link_libraries(motor_control_test
+target_link_libraries(motor_control_test_rs
+  ${catkin_LIBRARIES}
+  spdlog::spdlog
+  Eigen3::Eigen
+  robotsky_motor_lib
+)
+
+add_executable(motor_control_test_dm
+  src/motor_control_test_dm.cpp
+)
+target_link_libraries(motor_control_test_dm
   ${catkin_LIBRARIES}
   spdlog::spdlog
   Eigen3::Eigen
@@ -49,7 +59,8 @@ target_link_libraries(motor_control_test
 )
 
 install(TARGETS
-  motor_control_test
+  motor_control_test_dm
+  motor_control_test_rs
   DESTINATION lib/${PROJECT_NAME}
 )
 
