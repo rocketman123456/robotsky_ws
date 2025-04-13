@@ -20,7 +20,7 @@ int main(int argc, char** argv)
 
     std::vector<can_init_info_t> can_infos;
 
-    can_infos.emplace_back("can0");
+    can_infos.emplace_back("can1");
 
     driver.initialize(can_infos);
 
