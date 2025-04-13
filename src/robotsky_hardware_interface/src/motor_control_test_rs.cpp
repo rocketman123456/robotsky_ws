@@ -27,8 +27,11 @@ int main(int argc, char** argv)
 
     can_frame can_tx;
     can_frame can_rx;
-    uint16_t  can_id    = 0x03;
+    uint16_t  can_id    = 0x02;
     uint16_t  can_index = 0;
+
+    rs_motor_fb_t      data;
+    rs_data_read_write data_motor;
 
     rs_enable_motor_mode(can_tx, can_id);
     {
@@ -36,6 +39,7 @@ int main(int argc, char** argv)
         usleep(50);
         driver.receive(can_index, can_rx);
     }
+    rs_decode(can_rx, data, data_motor);
 
     rs_set_motor_parameter(can_tx, can_id, 0X7005, RS_Move_Control_mode, RS_Set_mode);
     {
@@ -43,6 +47,7 @@ int main(int argc, char** argv)
         usleep(50);
         driver.receive(can_index, can_rx);
     }
+    rs_decode(can_rx, data, data_motor);
 
     rs_get_motor_parameter(can_tx, can_id, 0X7005);
     {
@@ -50,6 +55,7 @@ int main(int argc, char** argv)
         usleep(50);
         driver.receive(can_index, can_rx);
     }
+    rs_decode(can_rx, data, data_motor);
 
     rs_mit_ctrl(can_tx, can_id, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f);
     {
@@ -57,44 +63,38 @@ int main(int argc, char** argv)
         usleep(50);
         driver.receive(can_index, can_rx);
     }
-    // dm_decode(can_rx, data);
+    rs_decode(can_rx, data, data_motor);
 
     spdlog::info("start");
-
-    uint64_t count = 0;
 
     rclcpp::Rate loop_rate(200);
     try
     {
         while (rclcpp::ok())
         {
-            rs_set_motor_parameter(can_tx, can_id, 0X7005, RS_Move_Control_mode, RS_Set_mode);
-            {
-                driver.send(can_index, can_tx);
-                usleep(50);
-                driver.receive(can_index, can_rx);
-            }
-
-            rs_get_motor_parameter(can_tx, can_id, 0X7005);
-            {
-                driver.send(can_index, can_tx);
-                usleep(50);
-                driver.receive(can_index, can_rx);
-            }
-
-            rs_mit_ctrl(can_tx, can_id, 0.0f, 0.0f, 0.0f, 1.5f, 0.0f);
-            {
-                driver.send(can_index, can_tx);
-                usleep(50);
-                driver.receive(can_index, can_rx);
-            }
-
-            // count++;
-            // if (count % 10 == 0)
+            // rs_set_motor_parameter(can_tx, can_id, 0X7005, RS_Move_Control_mode, RS_Set_mode);
             // {
-            //     spdlog::info("tick");
+            //     driver.send(can_index, can_tx);
+            //     usleep(50);
+            //     driver.receive(can_index, can_rx);
             // }
-            // spdlog::info("tick");
+
+            // rs_get_motor_parameter(can_tx, can_id, 0X7005);
+            // {
+            //     driver.send(can_index, can_tx);
+            //     usleep(50);
+            //     driver.receive(can_index, can_rx);
+            // }
+
+            rs_mit_ctrl(can_tx, can_id, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f);
+            {
+                driver.send(can_index, can_tx);
+                usleep(50);
+                driver.receive(can_index, can_rx);
+            }
+            rs_decode(can_rx, data, data_motor);
+
+            spdlog::info("motor {} pos : {}", data.id, data.pos);
 
             loop_rate.sleep();
         }

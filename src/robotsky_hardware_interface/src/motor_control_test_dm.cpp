@@ -32,14 +32,6 @@ int main(int argc, char** argv)
 
     dm_motor_fb_t data;
 
-    // dm_clear_err(can_tx, can_id, DM_MIT_MODE);
-    // {
-    //     driver.send(can_index, can_tx);
-    //     usleep(50);
-    //     driver.receive(can_index, can_rx);
-    // }
-    // dm_decode(can_rx, data);
-
     dm_enable_motor_mode(can_tx, can_id, DM_MIT_MODE);
     {
         driver.send(can_index, can_tx);
@@ -72,13 +64,11 @@ int main(int argc, char** argv)
     }
 
     dm_disable_motor_mode(can_tx, can_id, DM_MIT_MODE);
-
     {
         driver.send(can_index, can_tx);
         usleep(50);
         driver.receive(can_index, can_rx);
     }
-
     dm_decode(can_rx, data);
 
     rclcpp::shutdown();

@@ -51,7 +51,6 @@ static const uint16_t Index_List[] = {0X7005, 0X7006, 0X700A, 0X700B, 0X7010, 0X
 // 参数变量名  参数地址  描述  类型  字节数  单位/说明
 class data_read_write
 {
-
 public:
     data_read_write_one run_mode;      // 0:运控模式 1:位置模式 2:速度模式 3:电流模式 4:零点模式 uint8  1byte
     data_read_write_one iq_ref;        // 电流模式Iq指令  float 	4byte 	-23~23A
