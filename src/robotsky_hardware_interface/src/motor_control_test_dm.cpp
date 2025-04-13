@@ -22,13 +22,14 @@ int main(int argc, char** argv)
     std::vector<can_init_info_t> can_infos;
 
     can_infos.emplace_back("can0");
+    can_infos.emplace_back("can1");
 
     driver.initialize(can_infos);
 
     can_frame can_tx;
     can_frame can_rx;
-    uint16_t  can_id    = 0x01;
-    uint16_t  can_index = 0;
+    uint16_t  can_id    = 0x0c;
+    uint16_t  can_index = 1;
 
     dm_motor_fb_t data;
 

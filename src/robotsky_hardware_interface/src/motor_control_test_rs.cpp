@@ -21,14 +21,15 @@ int main(int argc, char** argv)
 
     std::vector<can_init_info_t> can_infos;
 
-    can_infos.emplace_back("can0");
+    can_infos.emplace_back("can2");
+    can_infos.emplace_back("can3");
 
     driver.initialize(can_infos);
 
     can_frame can_tx;
     can_frame can_rx;
-    uint16_t  can_id    = 0x02;
-    uint16_t  can_index = 0;
+    uint16_t  can_id    = 0x0a;
+    uint16_t  can_index = 1;
 
     rs_motor_fb_t      data;
     rs_data_read_write data_motor;
@@ -57,7 +58,7 @@ int main(int argc, char** argv)
     }
     rs_decode(can_rx, data, data_motor);
 
-    rs_mit_ctrl(can_tx, can_id, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f);
+    rs_mit_ctrl(can_tx, can_id, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f);
     {
         driver.send(can_index, can_tx);
         usleep(50);
