@@ -53,7 +53,7 @@ int main(int argc, char** argv)
     {
         while (rclcpp::ok())
         {
-            dm_mit_ctrl(can_tx, can_id, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f);
+            dm_mit_ctrl(can_tx, can_id, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f);
             {
                 driver.send(can_index, can_tx);
                 usleep(50);
