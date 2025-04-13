@@ -1,48 +1,80 @@
-//
-// Created by Mu Shibo on 12/2024
-//
+#include "can/can_driver.h"
+#include "motor/utils/dm_motor_utils.h"
 
-#include <sstream>
+#include <rclcpp/rclcpp.hpp>
+
+#include <linux/can.h>
+#include <spdlog/spdlog.h>
+
+#include <cmath>
+#include <cstdio>
 #include <memory>
-#include "ros/ros.h"
-#include "std_msgs/String.h"
-#include "can_msgs/Frame.h"
-#include "motor_control/motor_config.h"
-#include "motor_control/MotorFeedback.h"
+#include <unistd.h> // usleep
+#include <vector>
 
-#include "stdint.h"
-#include "math.h"
-
-
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "motor_control_test");
-    ros::NodeHandle nm;
-    ros::Rate loop_rate(300);
+    rclcpp::init(argc, argv);
 
-    std::vector<uint8_t> left_motor_ids = {0x01, 0x02};
+    CanDriver driver;
 
-    std::shared_ptr<MotorControlSet> _left_controller = 
-        std::make_shared<MotorControlSet>(&nm, "can1_rx", "can1_tx", left_motor_ids);
+    std::vector<can_init_info_t> can_infos;
 
-    ros::Duration(0.5).sleep(); 
-    // enable the motor
-    for(int i = 0; i < Joint_Num; i++){
-        _left_controller->getMotor(i+1).Enable_Motor();
-        std::cout << "Joint motor " << i+1 << " is enabled."<< std::endl;
-    }
-    ros::Duration(0.1).sleep(); 
+    can_infos.emplace_back("can0");
 
-    while (ros::ok())
-    {   
-        // _left_controller->getMotor(1).RobStrite_Motor_Pos_control(1,1);
-        // _left_controller->getMotor(2).RobStrite_Motor_Pos_control(1,1);
-        _left_controller->getMotor(1).RobStrite_Motor_move_control(0, 0, 1, 0, 1);
-        _left_controller->getMotor(2).RobStrite_Motor_move_control(0, 0, 0.1, 0, 1);
+    driver.initialize(can_infos);
 
-        ros::spinOnce();
-        loop_rate.sleep();
+    can_frame can_tx;
+    can_frame can_rx;
+    uint16_t  can_id = 0x01;
+
+    dm_motor_fb_t data;
+
+    dm_enable_motor_mode(can_tx, can_id, DM_MIT_MODE);
+
+    {
+        driver.send(can_id, can_tx);
+        usleep(50);
+        driver.receive(can_id, can_rx);
     }
 
+    dm_decode(can_rx, data);
+
+    rclcpp::Rate loop_rate(100);
+    try
+    {
+        while (rclcpp::ok())
+        {
+            dm_mit_ctrl(can_tx, can_id, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+
+            {
+                driver.send(can_id, can_tx);
+                usleep(50);
+                driver.receive(can_id, can_rx);
+            }
+
+            dm_decode(can_rx, data);
+
+            spdlog::info("motor {} pos : {}", can_id, data.pos);
+
+            loop_rate.sleep();
+        }
+    }
+    catch (std::runtime_error& e)
+    {
+        spdlog::warn("runtime error!");
+    }
+
+    dm_disable_motor_mode(can_tx, can_id, DM_MIT_MODE);
+
+    {
+        driver.send(can_id, can_tx);
+        usleep(50);
+        driver.receive(can_id, can_rx);
+    }
+
+    dm_decode(can_rx, data);
+
+    rclcpp::shutdown();
     return 0;
 }
