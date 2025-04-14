@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(robotsky_hardware_interface)
+project(robotsky_imu)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -8,67 +8,56 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-
-find_package(robotsky_interface REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(serial REQUIRED)
 
 find_package(spdlog REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-include_directories(
-  src
-)
+include_directories(src)
 
-add_library(robotsky_motor_lib
-  src/motor/utils/cyber_gear_utils.cpp
-  src/motor/utils/lk_motor_utils.cpp
-  src/motor/utils/dm_motor_utils.cpp
-  src/motor/utils/rs_motor_utils.cpp
-  src/can/can_utils.cpp
-  src/can/can_driver.cpp
-  src/can/can_bus_manager.cpp
-  src/motor/motor_control.cpp
-  src/motor/motor_factory.cpp
-  src/robot/robot.cpp
+add_library(robotsky_imu_lib
+  src/imu/ahrs_driver.cpp
+  src/imu/crc_table.cpp
 )
-target_link_libraries(robotsky_motor_lib
+target_link_libraries(robotsky_imu_lib
   spdlog::spdlog
   Eigen3::Eigen
 )
-ament_target_dependencies(robotsky_motor_lib
+ament_target_dependencies(robotsky_imu_lib
   rclcpp
-
-  # std_msgs
-  # sensor_msgs
-  # srobot_msg
-  # serial
+  std_msgs
+  sensor_msgs
+  geometry_msgs
+  serial
 )
 
-add_executable(motor_control_test_rs
-  src/motor_control_test_rs.cpp
+add_executable(imu_node
+  src/imu_node.cpp
 )
-target_link_libraries(motor_control_test_rs
-  ${catkin_LIBRARIES}
+target_link_libraries(imu_node
   spdlog::spdlog
   Eigen3::Eigen
-  robotsky_motor_lib
+  robotsky_imu_lib
 )
-
-add_executable(motor_control_test_dm
-  src/motor_control_test_dm.cpp
-)
-target_link_libraries(motor_control_test_dm
-  ${catkin_LIBRARIES}
-  spdlog::spdlog
-  Eigen3::Eigen
-  robotsky_motor_lib
+ament_target_dependencies(imu_node
+  rclcpp
+  std_msgs
+  sensor_msgs
+  geometry_msgs
+  serial
 )
 
 install(TARGETS
-  motor_control_test_dm
-  motor_control_test_rs
+  imu_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
+# uncomment the following section in order to fill in
+# further dependencies manually.
+# find_package(<dependency> REQUIRED)
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
 
