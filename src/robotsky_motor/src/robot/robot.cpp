@@ -1,13 +1,31 @@
 #include "robot/robot.h"
 
-void Robot::initCAN(std::vector<CanInitInfo>& can_infos)
+#include <chrono>
+
+Robot::Robot()
+    : Node("robotsky_motor")
+{}
+
+void Robot::initCAN(const std::vector<CanInitInfo>& can_infos)
 {
-    //
+    for (const auto& info : can_infos)
+    {
+        auto can_interface = std::make_shared<CANInterface>();
+        can_interface->initialize(info);
+        can_interfaces.push_back(can_interface);
+
+        auto can_bus = std::make_shared<CANBusManager>();
+        can_bus->addCAN(can_interface);
+        can_buses.push_back(can_bus);
+    }
 }
 
-void Robot::initMotors(std::vector<MotorInitInfo>& motor_infos)
+void Robot::initMotors(const std::vector<MotorInitInfo>& motor_infos)
 {
-    //
+    for (const auto& info : motor_infos)
+    {
+        //
+    }
 }
 
 void Robot::start()
@@ -18,6 +36,22 @@ void Robot::start()
 void Robot::stop()
 {
     //
+}
+
+void Robot::mainLoop()
+{
+    using namespace std::chrono;
+    double frequencyHz = 500;
+    auto   interval    = duration<double>(1.0 / frequencyHz);
+    auto   next_time   = steady_clock::now() + interval;
+
+    while (running)
+    {
+        // rclcpp::spin_some(this);
+        // 等待直到下一个时间点
+        std::this_thread::sleep_until(next_time);
+        next_time += interval;
+    }
 }
 
 void Robot::updateFromCAN(int motorId, double pos, double vel, double torque)

@@ -24,6 +24,7 @@ add_library(robotsky_motor_lib
   src/motor/utils/dm_motor_utils.cpp
   src/motor/utils/rs_motor_utils.cpp
   src/can/can_utils.cpp
+  src/can/can_interface.cpp
   src/can/can_bus_manager.cpp
   src/motor/motor_control.cpp
   src/motor/motor_factory.cpp
@@ -38,6 +39,16 @@ target_link_libraries(robotsky_motor_lib
 ament_target_dependencies(robotsky_motor_lib
   rclcpp
   robotsky_interface
+)
+
+add_executable(robot_node
+  src/robot_node.cpp
+)
+target_link_libraries(robot_node
+  ${catkin_LIBRARIES}
+  spdlog::spdlog
+  Eigen3::Eigen
+  robotsky_motor_lib
 )
 
 # add_executable(motor_control_test_rs
@@ -59,12 +70,14 @@ ament_target_dependencies(robotsky_motor_lib
 # Eigen3::Eigen
 # robotsky_motor_lib
 # )
+install(TARGETS
+  robot_node
 
-# install(TARGETS
-# motor_control_test_dm
-# motor_control_test_rs
-# DESTINATION lib/${PROJECT_NAME}
-# )
+  # motor_control_test_dm
+  # motor_control_test_rs
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   set(ament_cmake_copyright_FOUND TRUE)

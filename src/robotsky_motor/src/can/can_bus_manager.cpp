@@ -15,11 +15,11 @@
 //     can_interface->initialize(info);
 // }
 
-CANBusManager::~CANBusManager()
-{
-    stop();
-    // can_interface->finalize();
-}
+// CANBusManager::~CANBusManager()
+// {
+//     stop();
+//     // can_interface->finalize();
+// }
 
 void CANBusManager::addCAN(std::shared_ptr<CANInterface> can) { can_interface = can; }
 

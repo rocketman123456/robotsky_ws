@@ -15,7 +15,7 @@
 #include <string.h>
 #include <unistd.h>
 
-void CANInterface::initialize(const CanInitInfo& infos)
+void CANInterface::initialize(const CanInitInfo& info)
 {
     _can_name  = info.can_port;
     _socket_fd = init_can(info.can_port);
@@ -28,6 +28,6 @@ void CANInterface::finalize()
     close(_socket_fd);
 }
 
-void CANInterface::send(int can_index, can_frame& frame) { write(_socket_fd, &frame, k_can_size); }
+void CANInterface::send(can_frame& frame) { write(_socket_fd, &frame, k_can_size); }
 
-void CANInterface::receive(int can_index, can_frame& frame) { read(_socket_fd, &frame, k_can_size); }
+void CANInterface::receive(can_frame& frame) { read(_socket_fd, &frame, k_can_size); }

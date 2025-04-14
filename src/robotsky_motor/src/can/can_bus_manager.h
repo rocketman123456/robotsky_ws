@@ -14,8 +14,8 @@ class CANBusManager
 {
 public:
     // 构造函数：绑定到某个CAN接口，并关联该接口上的电机列表
-    CANBusManager() = default;
-    ~CANBusManager();
+    CANBusManager()  = default;
+    ~CANBusManager() = default;
 
     void addCAN(std::shared_ptr<CANInterface> can);
     void addMotor(std::shared_ptr<MotorControl> motor);
