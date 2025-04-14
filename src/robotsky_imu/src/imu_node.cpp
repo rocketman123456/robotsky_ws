@@ -12,9 +12,9 @@ int main(int argc, char** argv)
     std::shared_ptr<FDILink::AhrsBringup> imu = std::make_shared<FDILink::AhrsBringup>();
     imu->initialize();
 
-    rclcpp::Rate loop_rate(100);
     try
     {
+        // rclcpp::Rate loop_rate(100);
         while (rclcpp::ok())
         {
             imu->processLoop();

@@ -1,6 +1,8 @@
 #include "imu/ahrs_driver.h"
 #include "imu/crc_table.h"
 
+#include <spdlog/spdlog.h>
+
 namespace FDILink
 {
     AhrsBringup::AhrsBringup()
@@ -14,7 +16,7 @@ namespace FDILink
         _if_debug    = false;
         _device_type = 1;
 
-        _imu_topic         = "/srobot_imu";
+        _imu_topic         = "/robotsky_imu";
         _imu_frame_id      = "imu_link";
         _mag_pose_2d_topic = "/mag_pose_2d";
 
@@ -514,9 +516,10 @@ namespace FDILink
         // convert imu frame into body frame
         // _rot_mat << 0, -1, 0, 1, 0, 0, 0, 0, 1;
         // _rot_mat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
-        _rot_mat << 1, 0, 0, 0, -1, 0, 0, 0, -1;
+        // _rot_mat << 1, 0, 0, 0, -1, 0, 0, 0, -1;
+        _rot_mat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
         _rot = Eigen::Quaterniond(_rot_mat);
-        std::cout << "rot : " << _rot.toRotationMatrix() << std::endl;
+        // std::cout << "rot : " << _rot.toRotationMatrix() << std::endl;
     }
 
     void AhrsBringup::processLoop()
@@ -618,7 +621,9 @@ namespace FDILink
                 Eigen::AngleAxisd new_angle_axis(mat);
                 _init_rot = Eigen::AngleAxisd(0, Eigen::Vector3d::UnitX()) * Eigen::AngleAxisd(0, Eigen::Vector3d::UnitY()) *
                             Eigen::AngleAxisd(new_angle_axis.angle() * new_angle_axis.axis()(2), Eigen::Vector3d::UnitZ());
-                std::cout << new_angle_axis.angle() << ", " << new_angle_axis.axis() << "\n\n";
+                // std::cout << new_angle_axis.angle() << ", " << new_angle_axis.axis() << "\n\n";
+                // spdlog::info("init rot: {}, {}, {}, {}", new_angle_axis.angle(), new_angle_axis.axis()(0), new_angle_axis.axis()(1), new_angle_axis.axis()(2));
+                RCLCPP_INFO(this->get_logger(), "init rot: %f, %f, %f, %f", new_angle_axis.angle(), new_angle_axis.axis()(0), new_angle_axis.axis()(1), new_angle_axis.axis()(2));
             }
 
             geometry_msgs::msg::Pose  pose;
@@ -637,6 +642,8 @@ namespace FDILink
             imu_data.orientation.y = quat.y();
             imu_data.orientation.z = quat.z();
 
+            // RCLCPP_INFO(this->get_logger(), "orientation: %f, %f, %f, %f", quat.w(), quat.x(), quat.y(), quat.z());
+
             _imu_pub->publish(imu_data);
 
             pose.orientation.w = quat.w();
@@ -646,6 +653,8 @@ namespace FDILink
             pose.position.x    = 0;
             pose.position.y    = 0;
             pose.position.z    = 0;
+
+            // RCLCPP_INFO(this->get_logger(), "pose: %f, %f, %f, %f", quat.w(), quat.x(), quat.y(), quat.z());
 
             // transform angular_velocity into body frame
             Eigen::Vector3d w;
