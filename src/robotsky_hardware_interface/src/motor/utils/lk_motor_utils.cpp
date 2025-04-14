@@ -6,7 +6,7 @@
 #include <math.h>
 
 constexpr uint32_t DEVICE_STD_ID = 0x140;
-constexpr uint32_t DEVICE_RTN_ID = 320; //0x180;
+constexpr uint32_t DEVICE_RTN_ID = 320; // 0x180;
 
 motor_state_lk lk_decode_frame(can_frame& frame)
 {
@@ -75,8 +75,8 @@ motor_state_lk lk_decode_type_2(uint8_t type, can_frame& frame)
 
     // spdlog::warn("get motor id {}, frame id {}", state.id, frame.can_id);
 
-    int16_t iq      = (static_cast<int16_t>(frame.data[3]) << 8) | static_cast<int16_t>(frame.data[2]);
-    int16_t speed   = (static_cast<int16_t>(frame.data[5]) << 8) | static_cast<int16_t>(frame.data[4]);
+    int16_t  iq      = (static_cast<int16_t>(frame.data[3]) << 8) | static_cast<int16_t>(frame.data[2]);
+    int16_t  speed   = (static_cast<int16_t>(frame.data[5]) << 8) | static_cast<int16_t>(frame.data[4]);
     uint16_t encoder = (static_cast<uint16_t>(frame.data[7]) << 8) | static_cast<uint16_t>(frame.data[6]);
 
     state.iq      = iq * 33.0 / 4096.0;

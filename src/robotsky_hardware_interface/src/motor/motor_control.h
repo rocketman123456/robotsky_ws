@@ -7,47 +7,6 @@
 #include <linux/can/raw.h>
 #include <memory>
 
-struct MotorInitInfo
-{
-    MotorInitInfo() = default;
-    MotorInitInfo(uint16_t can_index_, uint16_t id_)
-        : can_index(can_index_)
-        , id(id_)
-    {}
-    MotorInitInfo(uint16_t can_index_, uint16_t id_, double dir, double off)
-        : can_index(can_index_)
-        , id(id_)
-        , direction(dir)
-        , offset(off)
-    {}
-    MotorInitInfo(uint16_t can_index_, uint16_t id_, double dir, double off, double delta)
-        : can_index(can_index_)
-        , id(id_)
-        , direction(dir)
-        , offset(off)
-        , delta(delta)
-    {}
-    MotorInitInfo(uint16_t can_index_, uint16_t id_, double dir, double off, double delta, double ps, double vs, double ts)
-        : can_index(can_index_)
-        , id(id_)
-        , direction(dir)
-        , offset(off)
-        , delta(delta)
-        , pos_scalar(ps)
-        , vel_scalar(vs)
-        , tau_scalar(ts)
-    {}
-
-    uint16_t can_index  = 0;
-    uint16_t id         = 0;
-    double   direction  = 1.0;
-    double   offset     = 0.0;
-    double   delta      = 0.0;
-    double   pos_scalar = 1.0;
-    double   vel_scalar = 1.0;
-    double   tau_scalar = 1.0;
-};
-
 // common control procedure:
 //   enable -> set control parameter -> update
 class MotorControl

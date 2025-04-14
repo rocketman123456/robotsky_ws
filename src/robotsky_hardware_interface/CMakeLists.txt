@@ -9,6 +9,8 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 
+find_package(robotsky_interface REQUIRED)
+
 find_package(spdlog REQUIRED)
 find_package(Eigen3 REQUIRED)
 
@@ -21,9 +23,11 @@ add_library(robotsky_motor_lib
   src/motor/utils/lk_motor_utils.cpp
   src/motor/utils/dm_motor_utils.cpp
   src/motor/utils/rs_motor_utils.cpp
+  src/can/can_utils.cpp
   src/can/can_driver.cpp
   src/can/can_bus_manager.cpp
   src/motor/motor_control.cpp
+  src/motor/motor_factory.cpp
   src/robot/robot.cpp
 )
 target_link_libraries(robotsky_motor_lib

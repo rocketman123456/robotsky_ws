@@ -113,7 +113,7 @@ void rs_set_motor_parameter(can_frame& frame, uint16_t motor_id, uint16_t index,
 void rs_get_motor_parameter(can_frame& frame, uint16_t motor_id, uint16_t index);
 void rs_mit_ctrl(can_frame& frame, uint16_t motor_id, float pos, float vel, float kp, float kd, float tau);
 void rs_pos_speed_ctrl(can_frame& frame, uint16_t motor_id, float pos, float vel);
-void rs_speed_ctrl(can_frame& frame, uint16_t motor_id, float vel);
+void rs_zero_ctrl(can_frame& frame, uint16_t motor_id);
 void rs_save_pos_zero(can_frame& frame, uint16_t motor_id);
 
 void rs_decode(const can_frame& frame, rs_motor_fb_t& data, rs_data_read_write& drw);

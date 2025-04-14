@@ -136,12 +136,16 @@ void rs_mit_ctrl(can_frame& frame, uint16_t motor_id, float pos, float vel, floa
 
 void rs_pos_speed_ctrl(can_frame& frame, uint16_t motor_id, float pos, float vel)
 {
-    //
+    // TODO :
+    // Set_RobStrite_Motor_parameter(0X7005, Pos_control_mode, Set_mode);
+    // Set_RobStrite_Motor_parameter(0X7017, Motor_Set_All.set_speed, Set_parameter);
+    // Set_RobStrite_Motor_parameter(0X7016, Motor_Set_All.set_angle, Set_parameter);
 }
 
-void rs_speed_ctrl(can_frame& frame, uint16_t motor_id, float vel)
+void rs_zero_ctrl(can_frame& frame, uint16_t motor_id)
 {
-    //
+    // TODO :
+    // Set_RobStrite_Motor_parameter(0X7005, Set_Zero_mode, Set_mode); // 设置电机模式
 }
 
 void rs_save_pos_zero(can_frame& frame, uint16_t motor_id)
