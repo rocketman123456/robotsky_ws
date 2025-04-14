@@ -24,11 +24,12 @@ add_library(robotsky_motor_lib
   src/motor/utils/dm_motor_utils.cpp
   src/motor/utils/rs_motor_utils.cpp
   src/can/can_utils.cpp
-  src/can/can_driver.cpp
   src/can/can_bus_manager.cpp
   src/motor/motor_control.cpp
   src/motor/motor_factory.cpp
   src/robot/robot.cpp
+
+  # src/can/can_driver.cpp
 )
 target_link_libraries(robotsky_motor_lib
   spdlog::spdlog
@@ -36,49 +37,37 @@ target_link_libraries(robotsky_motor_lib
 )
 ament_target_dependencies(robotsky_motor_lib
   rclcpp
-
-  # std_msgs
-  # sensor_msgs
-  # srobot_msg
-  # serial
+  robotsky_interface
 )
 
-add_executable(motor_control_test_rs
-  src/motor_control_test_rs.cpp
-)
-target_link_libraries(motor_control_test_rs
-  ${catkin_LIBRARIES}
-  spdlog::spdlog
-  Eigen3::Eigen
-  robotsky_motor_lib
-)
+# add_executable(motor_control_test_rs
+# src/motor_control_test_rs.cpp
+# )
+# target_link_libraries(motor_control_test_rs
+# ${catkin_LIBRARIES}
+# spdlog::spdlog
+# Eigen3::Eigen
+# robotsky_motor_lib
+# )
 
-add_executable(motor_control_test_dm
-  src/motor_control_test_dm.cpp
-)
-target_link_libraries(motor_control_test_dm
-  ${catkin_LIBRARIES}
-  spdlog::spdlog
-  Eigen3::Eigen
-  robotsky_motor_lib
-)
+# add_executable(motor_control_test_dm
+# src/motor_control_test_dm.cpp
+# )
+# target_link_libraries(motor_control_test_dm
+# ${catkin_LIBRARIES}
+# spdlog::spdlog
+# Eigen3::Eigen
+# robotsky_motor_lib
+# )
 
-install(TARGETS
-  motor_control_test_dm
-  motor_control_test_rs
-  DESTINATION lib/${PROJECT_NAME}
-)
-
+# install(TARGETS
+# motor_control_test_dm
+# motor_control_test_rs
+# DESTINATION lib/${PROJECT_NAME}
+# )
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
-
-  # the following line skips the linter which checks for copyrights
-  # comment the line when a copyright and license is added to all source files
   set(ament_cmake_copyright_FOUND TRUE)
-
-  # the following line skips cpplint (only works in a git repo)
-  # comment the line when this package is in a git repo and when
-  # a copyright and license is added to all source files
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()

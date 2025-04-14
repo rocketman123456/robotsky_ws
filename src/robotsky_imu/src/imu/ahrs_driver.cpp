@@ -521,7 +521,6 @@ namespace FDILink
 
     void AhrsBringup::processLoop()
     {
-
         if (!_serial.isOpen())
         {
             RCLCPP_WARN(this->get_logger(), "serial unopen");

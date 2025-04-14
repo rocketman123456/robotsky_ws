@@ -50,6 +50,11 @@ ament_target_dependencies(imu_node
   serial
 )
 
+install(
+  DIRECTORY launch rviz
+  DESTINATION share/${PROJECT_NAME}/
+)
+
 install(TARGETS
   imu_node
   DESTINATION lib/${PROJECT_NAME}
