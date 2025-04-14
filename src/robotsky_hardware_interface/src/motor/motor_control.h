@@ -7,28 +7,28 @@
 #include <linux/can/raw.h>
 #include <memory>
 
-struct motor_init_info_t
+struct MotorInitInfo
 {
-    motor_init_info_t() = default;
-    motor_init_info_t(uint16_t can_id_, uint16_t id_)
-        : can_id(can_id_)
+    MotorInitInfo() = default;
+    MotorInitInfo(uint16_t can_index_, uint16_t id_)
+        : can_index(can_index_)
         , id(id_)
     {}
-    motor_init_info_t(uint16_t can_id_, uint16_t id_, double dir, double off)
-        : can_id(can_id_)
+    MotorInitInfo(uint16_t can_index_, uint16_t id_, double dir, double off)
+        : can_index(can_index_)
         , id(id_)
         , direction(dir)
         , offset(off)
     {}
-    motor_init_info_t(uint16_t can_id_, uint16_t id_, double dir, double off, double delta)
-        : can_id(can_id_)
+    MotorInitInfo(uint16_t can_index_, uint16_t id_, double dir, double off, double delta)
+        : can_index(can_index_)
         , id(id_)
         , direction(dir)
         , offset(off)
         , delta(delta)
     {}
-    motor_init_info_t(uint16_t can_id_, uint16_t id_, double dir, double off, double delta, double ps, double vs, double ts)
-        : can_id(can_id_)
+    MotorInitInfo(uint16_t can_index_, uint16_t id_, double dir, double off, double delta, double ps, double vs, double ts)
+        : can_index(can_index_)
         , id(id_)
         , direction(dir)
         , offset(off)
@@ -38,7 +38,7 @@ struct motor_init_info_t
         , tau_scalar(ts)
     {}
 
-    uint16_t can_id     = 0;
+    uint16_t can_index  = 0;
     uint16_t id         = 0;
     double   direction  = 1.0;
     double   offset     = 0.0;
@@ -49,21 +49,21 @@ struct motor_init_info_t
 };
 
 // common control procedure:
-//      enable -> set control parameter -> update
+//   enable -> set control parameter -> update
 class MotorControl
 {
 public:
-    MotorControl()  = default;
-    ~MotorControl() = default;
+    MotorControl()          = default;
+    virtual ~MotorControl() = default;
 
-    void initialize(const motor_init_info_t& info);
+    void initialize(const MotorInitInfo& info);
 
-    void setZero();
-    void enable();
-    void disable();
+    virtual void setZero() {}
+    virtual void enable() {}
+    virtual void disable() {}
 
-    void setMixedControlInDeg(double pos, double vel, double tau, double kp, double kd);
-    void setMixedControlInRad(double pos, double vel, double tau, double kp, double kd);
+    virtual void setMixedControlInDeg(double pos, double vel, double tau, double kp, double kd);
+    virtual void setMixedControlInRad(double pos, double vel, double tau, double kp, double kd);
 
     double getPositionRad() const;
     double getVelocityRad() const;
@@ -74,7 +74,7 @@ public:
     // update data with infos
     void update();
 
-    uint16_t can_id     = 0;
+    uint16_t can_index  = 0;
     uint16_t id         = 0;
     double   direction  = 1.0;
     double   offset     = 0.0;
@@ -86,7 +86,9 @@ public:
     double torque_upper_limit = 12.0;
     double torque_lower_limit = -12.0;
 
-    motor_data_t data;
-    can_frame    can_tx;
-    can_frame    can_rx;
+    MotorState state;
+    MotorCmd   cmd;
+
+    can_frame can_tx;
+    can_frame can_rx;
 };

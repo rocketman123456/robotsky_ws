@@ -62,7 +62,7 @@ void cyber_set_zero(uint16_t id, can_frame& frame)
     cyber_encode(id, can_msg_type::SetZero, frame);
 }
 
-void cyber_mixed_control(uint16_t id, motor_data_t& data, can_frame& frame)
+void cyber_mixed_control(uint16_t id, cyber_motor_data_t& data, can_frame& frame)
 {
     s_slaveid     = (uint16_t)((data.tau_des + 12.0) / 24.0 * 65535.0);
     cyber_data[0] = (uint16_t)((data.pos_des + 4 * M_PI) / (8 * M_PI) * 65535.0);
@@ -118,7 +118,7 @@ float cyber_decode_float_param(can_frame& frame)
     return data;
 }
 
-bool cyber_get_feedback(const can_frame& frame, motor_data_t& data)
+bool cyber_get_feedback(const can_frame& frame, cyber_motor_data_t& data)
 {
     cyber_decode(frame);
     if (s_fbtype == 2)

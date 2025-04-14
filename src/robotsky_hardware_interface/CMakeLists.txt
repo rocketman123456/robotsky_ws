@@ -22,8 +22,9 @@ add_library(robotsky_motor_lib
   src/motor/utils/dm_motor_utils.cpp
   src/motor/utils/rs_motor_utils.cpp
   src/can/can_driver.cpp
-
-  # src/motor/motor_control.cpp
+  src/can/can_bus_manager.cpp
+  src/motor/motor_control.cpp
+  src/robot/robot.cpp
 )
 target_link_libraries(robotsky_motor_lib
   spdlog::spdlog

@@ -75,14 +75,23 @@ int CanDriver::initCAN(const std::string& port)
     return sockfd;
 }
 
+int CanDriver::getSocket(int index)
+{
+    // Check if index is within bounds
+    // assert(index >= 0 && index < _sockets.size());
+    return _sockets[index];
+}
+
 void CanDriver::send(int can_index, can_frame& frame)
 {
+    assert(can_index >= 0 && can_index < _sockets.size() && "can index out of range");
     int sockfd = getSocket(can_index);
     write(sockfd, &frame, k_can_size);
 }
 
 void CanDriver::receive(int can_index, can_frame& frame)
 {
+    assert(can_index >= 0 && can_index < _sockets.size() && "can index out of range");
     int sockfd = getSocket(can_index);
     read(sockfd, &frame, k_can_size);
 }

@@ -30,7 +30,7 @@ public:
     void send(int can_index, can_frame& frame);
     void receive(int can_index, can_frame& frame);
 
-    int getSocket(int index) { return _sockets[index]; }
+    int getSocket(int index);
 
 private:
     int initCAN(const std::string& port);
