@@ -29,19 +29,30 @@ int main(int argc, char** argv)
     can_frame can_tx;
     can_frame can_rx;
 
-    uint16_t can_ids[]    = {0x02, 0x03};
-    uint16_t can_indexs[] = {0, 0};
+    // uint16_t can_ids[]    = {0x02, 0x03};
+    // uint16_t can_indexs[] = {0, 0};
     // uint16_t can_ids[]    = {0x06, 0x07};
     // uint16_t can_indexs[] = {0, 0};
     // uint16_t can_ids[]    = {0x0a, 0x0b};
     // uint16_t can_indexs[] = {1, 1};
-    // uint16_t can_ids[]    = {0x0e, 0x0f};
-    // uint16_t can_indexs[] = {1, 1};
+    uint16_t can_ids[]    = {0x0e, 0x0f};
+    uint16_t can_indexs[] = {1, 1};
 
     uint16_t motor_count = 2;
 
     rs_motor_fb_t      data;
     rs_data_read_write data_motor;
+
+    for (int i = 0; i < motor_count; ++i)
+    {
+        rs_disable_motor_mode(can_tx, can_ids[i], 0);
+        {
+            driver.send(can_indexs[i], can_tx);
+            usleep(50);
+            driver.receive(can_indexs[i], can_rx);
+        }
+        rs_decode(can_rx, data, data_motor);
+    }
 
     for (int i = 0; i < motor_count; ++i)
     {

@@ -145,7 +145,7 @@ void rs_pos_speed_ctrl(can_frame& frame, uint16_t motor_id, float pos, float vel
 void rs_zero_ctrl(can_frame& frame, uint16_t motor_id)
 {
     // TODO :
-    // Set_RobStrite_Motor_parameter(0X7005, Set_Zero_mode, Set_mode); // 设置电机模式
+    rs_set_motor_parameter(frame, motor_id, 0X7005, RS_Set_Zero_mode, RS_Set_mode);
 }
 
 void rs_save_pos_zero(can_frame& frame, uint16_t motor_id)
