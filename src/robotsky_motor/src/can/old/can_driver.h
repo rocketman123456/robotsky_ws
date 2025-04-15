@@ -1,6 +1,6 @@
 #pragma once
 
-#include "can_data.h"
+#include "can/can_data.h"
 
 #include <linux/can.h>
 #include <linux/can/error.h>

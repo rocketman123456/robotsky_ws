@@ -74,9 +74,8 @@ target_link_libraries(motor_control_test_dm
 
 install(TARGETS
   robot_node
-
-  # motor_control_test_dm
-  # motor_control_test_rs
+  motor_control_test_dm
+  motor_control_test_rs
   DESTINATION lib/${PROJECT_NAME}
 )
 

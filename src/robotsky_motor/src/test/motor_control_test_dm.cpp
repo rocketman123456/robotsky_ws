@@ -50,9 +50,11 @@ int main(int argc, char** argv)
         dm_decode(can_rx, data);
     }
 
-    rclcpp::Rate loop_rate(100);
+    spdlog::info("start");
+
     try
     {
+        rclcpp::Rate loop_rate(100);
         while (rclcpp::ok())
         {
             for (int i = 0; i < motor_count; ++i)
