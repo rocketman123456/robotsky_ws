@@ -8,12 +8,8 @@
 #include <chrono>
 #include <memory>
 
-int main(int argc, char** argv)
+std::vector<CanInitInfo> prepare_can()
 {
-    rclcpp::init(argc, argv);
-
-    auto robot = std::make_shared<Robot>();
-
     std::vector<CanInitInfo> can_infos;
 
     can_infos.push_back({"can0"});
@@ -21,8 +17,11 @@ int main(int argc, char** argv)
     can_infos.push_back({"can2"});
     can_infos.push_back({"can3"});
 
-    robot->initCAN(can_infos);
+    return can_infos;
+}
 
+std::vector<MotorInitInfo> prepare_motor()
+{
     std::vector<MotorInitInfo> motor_infos;
 
     motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 0, 0x01, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
@@ -45,20 +44,29 @@ int main(int argc, char** argv)
     motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 3, 0x0e, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
     motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 3, 0x0f, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
 
+    return motor_infos;
+}
+
+int main(int argc, char** argv)
+{
+    rclcpp::init(argc, argv);
+
+    auto robot = std::make_shared<Robot>();
+
+    std::vector<CanInitInfo>   can_infos   = prepare_can();
+    std::vector<MotorInitInfo> motor_infos = prepare_motor();
+
+    robot->initCAN(can_infos);
     robot->initMotors(motor_infos);
 
-    // std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("motor_server");
-
-    // rclcpp::spin(robot);
-
     using namespace std::chrono;
-    double frequency_hz = 500;
-    auto   interval     = duration<double>(1.0 / frequency_hz);
-    auto   next_time    = steady_clock::now() + interval;
-
     using Clock     = std::chrono::high_resolution_clock;
     using TimePoint = Clock::time_point;
     using Duration  = std::chrono::duration<double>;
+
+    double frequency_hz = 500;
+    auto   interval     = Duration(1.0 / frequency_hz);
+    auto   next_time    = Clock::now() + interval;
 
     const int num_iterations = 1000;
 
@@ -72,7 +80,7 @@ int main(int argc, char** argv)
 
     try
     {
-        rclcpp::Rate loop_rate(500);
+        // rclcpp::Rate loop_rate(500);
 
         while (rclcpp::ok())
         {

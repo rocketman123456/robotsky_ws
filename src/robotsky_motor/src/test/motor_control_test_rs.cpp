@@ -1,4 +1,4 @@
-#include "can/can_driver.h"
+#include "can/old/can_driver.h"
 #include "motor/utils/dm_motor_utils.h"
 #include "motor/utils/rs_motor_utils.h"
 

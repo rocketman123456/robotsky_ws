@@ -1,4 +1,5 @@
 #include "robot/robot.h"
+#include "motor/motor_factory.h"
 
 #include <chrono>
 
@@ -24,7 +25,7 @@ void Robot::initMotors(const std::vector<MotorInitInfo>& motor_infos)
 {
     for (const auto& info : motor_infos)
     {
-        //
+        info;
     }
 }
 

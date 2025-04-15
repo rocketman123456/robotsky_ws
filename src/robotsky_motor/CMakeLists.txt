@@ -26,6 +26,7 @@ add_library(robotsky_motor_lib
   src/can/can_utils.cpp
   src/can/can_interface.cpp
   src/can/can_bus_manager.cpp
+  src/can/old/can_driver.cpp
   src/motor/motor_control.cpp
   src/motor/motor_factory.cpp
   src/robot/robot.cpp
@@ -51,25 +52,26 @@ target_link_libraries(robot_node
   robotsky_motor_lib
 )
 
-# add_executable(motor_control_test_rs
-# src/motor_control_test_rs.cpp
-# )
-# target_link_libraries(motor_control_test_rs
-# ${catkin_LIBRARIES}
-# spdlog::spdlog
-# Eigen3::Eigen
-# robotsky_motor_lib
-# )
+add_executable(motor_control_test_rs
+  src/test/motor_control_test_rs.cpp
+)
+target_link_libraries(motor_control_test_rs
+  ${catkin_LIBRARIES}
+  spdlog::spdlog
+  Eigen3::Eigen
+  robotsky_motor_lib
+)
 
-# add_executable(motor_control_test_dm
-# src/motor_control_test_dm.cpp
-# )
-# target_link_libraries(motor_control_test_dm
-# ${catkin_LIBRARIES}
-# spdlog::spdlog
-# Eigen3::Eigen
-# robotsky_motor_lib
-# )
+add_executable(motor_control_test_dm
+  src/test/motor_control_test_dm.cpp
+)
+target_link_libraries(motor_control_test_dm
+  ${catkin_LIBRARIES}
+  spdlog::spdlog
+  Eigen3::Eigen
+  robotsky_motor_lib
+)
+
 install(TARGETS
   robot_node
 

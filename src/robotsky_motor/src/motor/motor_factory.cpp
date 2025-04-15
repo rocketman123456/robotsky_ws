@@ -1,7 +1,23 @@
 #include "motor/motor_factory.h"
 
+#include "motor/dm_motor_control.h"
+#include "motor/rs_motor_control.h"
+
+#include <memory>
+
 std::shared_ptr<MotorControl> create_motor_control(const MotorInitInfo& info)
 {
-    //
-    return {};
+    switch (info.type)
+    {
+        case MotorType::DM:
+            return std::make_shared<DMotorControl>(info);
+        case MotorType::RS:
+            return std::make_shared<RSMotorControl>(info);
+        case MotorType::CYBER:
+            return std::make_shared<CYBERMotorControl>(info);
+        case MotorType::LK:
+            return std::make_shared<LKMotorControl>(info);
+        default:
+            return {};
+    }
 }
