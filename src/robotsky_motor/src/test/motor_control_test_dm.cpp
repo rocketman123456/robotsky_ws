@@ -29,9 +29,6 @@ int main(int argc, char** argv)
     can_frame can_tx;
     can_frame can_rx;
 
-    // uint16_t  can_id    = 0x0c;
-    // uint16_t  can_index = 1;
-
     uint16_t can_ids[]    = {0x01, 0x04, 0x05, 0x08, 0x09, 0x0c, 0x0d, 0x10};
     uint16_t can_indexs[] = {0, 0, 0, 0, 1, 1, 1, 1};
 

@@ -29,9 +29,6 @@ int main(int argc, char** argv)
     can_frame can_tx;
     can_frame can_rx;
 
-    // uint16_t  can_id    = 0x0a;
-    // uint16_t  can_index = 1;
-
     uint16_t can_ids[]    = {0x02, 0x03, 0x06, 0x07, 0x0a, 0x0b, 0x0e, 0x0f};
     uint16_t can_indexs[] = {0, 0, 0, 0, 1, 1, 1, 1};
 
@@ -60,23 +57,7 @@ int main(int argc, char** argv)
             driver.receive(can_indexs[i], can_rx);
         }
         rs_decode(can_rx, data, data_motor);
-
-        // rs_get_motor_parameter(can_tx, can_ids[i], 0X7005);
-        // {
-        //     driver.send(can_indexs[i], can_tx);
-        //     usleep(50);
-        //     driver.receive(can_indexs[i], can_rx);
-        // }
-        // rs_decode(can_rx, data, data_motor);
     }
-
-    // rs_mit_ctrl(can_tx, can_ids[i], 0.0f, 0.0f, 0.0f, 2.0f, 0.0f);
-    // {
-    //     driver.send(can_indexs[i], can_tx);
-    //     usleep(50);
-    //     driver.receive(can_indexs[i], can_rx);
-    // }
-    // rs_decode(can_rx, data, data_motor);
 
     spdlog::info("start");
 
@@ -85,20 +66,6 @@ int main(int argc, char** argv)
     {
         while (rclcpp::ok())
         {
-            // rs_set_motor_parameter(can_tx, can_id, 0X7005, RS_Move_Control_mode, RS_Set_mode);
-            // {
-            //     driver.send(can_index, can_tx);
-            //     usleep(50);
-            //     driver.receive(can_index, can_rx);
-            // }
-
-            // rs_get_motor_parameter(can_tx, can_id, 0X7005);
-            // {
-            //     driver.send(can_index, can_tx);
-            //     usleep(50);
-            //     driver.receive(can_index, can_rx);
-            // }
-
             for (int i = 0; i < motor_count; ++i)
             {
                 rs_mit_ctrl(can_tx, can_ids[i], 0.0f, 0.0f, 0.0f, 2.0f, 0.0f);
