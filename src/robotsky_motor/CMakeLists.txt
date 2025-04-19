@@ -23,11 +23,14 @@ add_library(robotsky_motor_lib
   src/motor/utils/lk_motor_utils.cpp
   src/motor/utils/dm_motor_utils.cpp
   src/motor/utils/rs_motor_utils.cpp
+  src/motor/motor_control.cpp
+  src/motor/rs_motor_control.cpp
+  src/motor/dm_motor_control.cpp
+  src/motor/cyber_motor_control.cpp
   src/can/can_utils.cpp
   src/can/can_interface.cpp
   src/can/can_bus_manager.cpp
   src/can/old/can_driver.cpp
-  src/motor/motor_control.cpp
   src/motor/motor_factory.cpp
   src/robot/robot.cpp
 

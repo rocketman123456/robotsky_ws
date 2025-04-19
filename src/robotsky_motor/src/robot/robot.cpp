@@ -25,7 +25,7 @@ void Robot::initMotors(const std::vector<MotorInitInfo>& motor_infos)
 {
     for (const auto& info : motor_infos)
     {
-        info;
+        auto motor = create_motor_control(info);
     }
 }
 

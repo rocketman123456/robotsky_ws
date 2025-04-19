@@ -38,6 +38,7 @@ protected:
     void forwardDataComputeDeg(double pos, double vel, double tau, double kp, double kd);
     void forwardDataComputeRad(double pos, double vel, double tau, double kp, double kd);
 
+public:
     uint16_t can_index  = 0;
     uint16_t id         = 0;
     double   direction  = 1.0;
