@@ -244,7 +244,7 @@ void dm_decode(const can_frame& frame, dm_motor_fb_t& data)
     data.t_int  = ((frame.data[4] & 0xF) << 8) | frame.data[5];
     data.pos    = dm_uint_to_float(data.p_int, DM_P_MIN, DM_P_MAX, 16); // (-12.5,12.5)
     data.vel    = dm_uint_to_float(data.v_int, DM_V_MIN, DM_V_MAX, 12); // (-45.0,45.0)
-    data.tor    = dm_uint_to_float(data.t_int, DM_T_MIN, DM_T_MAX, 12); // (-18.0,18.0)
+    data.tau    = dm_uint_to_float(data.t_int, DM_T_MIN, DM_T_MAX, 12); // (-18.0,18.0)
     data.t_mos  = (float)(frame.data[6]);
     data.t_coil = (float)(frame.data[7]);
 }

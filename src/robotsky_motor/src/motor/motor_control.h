@@ -15,14 +15,18 @@ public:
     MotorControl()          = default;
     virtual ~MotorControl() = default;
 
-    void initialize(const MotorInitInfo& info);
+    virtual void initialize(const MotorInitInfo& info);
 
-    virtual void setZero() {}
-    virtual void enable() {}
-    virtual void disable() {}
+    virtual void setZero() = 0;
+    virtual void enable()  = 0;
+    virtual void disable() = 0;
 
-    virtual void setMixedControlInDeg(double pos, double vel, double tau, double kp, double kd);
-    virtual void setMixedControlInRad(double pos, double vel, double tau, double kp, double kd);
+    virtual void setMixedControlInDeg(double pos, double vel, double tau, double kp, double kd) = 0;
+    virtual void setMixedControlInRad(double pos, double vel, double tau, double kp, double kd) = 0;
+
+    // static virtual MotorState decode() = 0;
+
+    virtual void update();
 
     double getPositionRad() const;
     double getVelocityRad() const;
@@ -30,8 +34,9 @@ public:
     double getVelocityDeg() const;
     double getTorque() const;
 
-    // update data with infos
-    void update();
+protected:
+    void forwardDataComputeDeg(double pos, double vel, double tau, double kp, double kd);
+    void forwardDataComputeRad(double pos, double vel, double tau, double kp, double kd);
 
     uint16_t can_index  = 0;
     uint16_t id         = 0;

@@ -7,6 +7,8 @@
 
 #include <chrono>
 #include <memory>
+#include <pthread.h>
+#include <sched.h>
 
 std::vector<CanInitInfo> prepare_can()
 {
@@ -29,20 +31,20 @@ std::vector<MotorInitInfo> prepare_motor()
     motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 0, 0x05, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
     motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 0, 0x08, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
 
-    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 2, 0x02, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 2, 0x03, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 2, 0x06, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 2, 0x07, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 2, 0x02, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 2, 0x03, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 2, 0x06, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 2, 0x07, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
 
-    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 1, 0x09, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 1, 0x0c, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 1, 0x0d, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 1, 0x10, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 3, 0x0a, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 3, 0x0b, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 3, 0x0e, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 3, 0x0f, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
 
-    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 3, 0x0a, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 3, 0x0b, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 3, 0x0e, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 3, 0x0f, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::DM, MotorMode::VELOCITY, 1, 0x09, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::DM, MotorMode::VELOCITY, 1, 0x0c, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::DM, MotorMode::VELOCITY, 1, 0x0d, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::DM, MotorMode::VELOCITY, 1, 0x10, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
 
     return motor_infos;
 }
@@ -59,6 +61,21 @@ int main(int argc, char** argv)
     robot->initCAN(can_infos);
     robot->initMotors(motor_infos);
 
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(0, &cpuset); // Set CPU core 0
+    if (sched_setaffinity(0, sizeof(cpu_set_t), &cpuset) == -1)
+    {
+        spdlog::error("Failed to set CPU affinity");
+        exit(-1);
+    }
+
+    sched_param param;
+    int         policy;
+    pthread_getschedparam(pthread_self(), &policy, &param);
+    param.sched_priority = 1; // 20
+    pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);
+
     using namespace std::chrono;
     using Clock     = std::chrono::high_resolution_clock;
     using TimePoint = Clock::time_point;
@@ -71,9 +88,10 @@ int main(int argc, char** argv)
     const int num_iterations = 1000;
 
     std::vector<double> freqs;
-    freqs.reserve(num_iterations + 1);
+    freqs.resize(num_iterations + 1);
 
     uint64_t count = 0;
+    uint64_t index = 0;
 
     // 记录第一次迭代的起始时间
     TimePoint prev = Clock::now();
@@ -96,15 +114,17 @@ int main(int argc, char** argv)
                 double interval = dt.count();
                 if (interval > 0.0)
                 {
-                    freqs.push_back(1.0 / interval);
+                    // freqs.push_back(1.0 / interval);
+                    freqs[index] = 1.0 / interval;
                 }
             }
 
             if (count > 0 && count % num_iterations == 0)
             {
                 // 计算平均频率
-                double sum  = std::accumulate(freqs.begin(), freqs.end(), 0.0);
-                double mean = sum / freqs.size();
+                double sum = std::accumulate(freqs.begin(), freqs.end(), 0.0);
+                // double mean = sum / (freqs.size());
+                double mean = sum / (index + 1);
 
                 // 计算方差
                 double sq_sum = 0.0;
@@ -118,11 +138,14 @@ int main(int argc, char** argv)
                 spdlog::info("Average frequency: {} Hz", mean);
                 spdlog::info("Variance: {} (Hz^2)", variance);
 
-                freqs.clear();
-                freqs.reserve(num_iterations + 1);
+                // freqs.clear();
+                // freqs.reserve(num_iterations + 1);
+
+                index = 0;
             }
 
             count++;
+            index++;
 
             rclcpp::spin_some(robot);
 

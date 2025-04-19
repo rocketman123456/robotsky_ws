@@ -33,22 +33,34 @@ int main(int argc, char** argv)
     uint16_t can_indexs[] = {0, 0, 0, 0, 1, 1, 1, 1};
 
     float pos[] = {
-        -0.6, 1.2, // RF
-        0.6, -1.2, // LF
-        0.6, -1.2, // RB
-        -0.6, 1.2, // LB
+        -0.6,
+        1.2, // RF
+        0.6,
+        -1.2, // LF
+        0.6,
+        -1.2, // RB
+        -0.6,
+        1.2, // LB
     };
     float kp[] = {
-        0.0, 0.0, // RF
-        0.0, 0.0, // LF
-        0.0, 0.0, // RB
-        0.0, 0.0, // LB
+        0.0,
+        0.0, // RF
+        0.0,
+        0.0, // LF
+        0.0,
+        0.0, // RB
+        0.0,
+        0.0, // LB
     };
     float kd[] = {
-        1.0, 1.0, // RF
-        1.0, 1.0, // LF
-        1.0, 1.0, // RB
-        1.0, 1.0, // LB
+        1.0,
+        1.0, // RF
+        1.0,
+        1.0, // LF
+        1.0,
+        1.0, // RB
+        1.0,
+        1.0, // LB
     };
 
     uint16_t motor_count = 8;
@@ -75,7 +87,7 @@ int main(int argc, char** argv)
             driver.send(can_indexs[i], can_tx);
             usleep(50);
             driver.receive(can_indexs[i], can_rx);
-            usleep(50);
+            // usleep(50);
         }
         rs_decode(can_rx, data, data_motor);
     }
@@ -106,14 +118,13 @@ int main(int argc, char** argv)
                     driver.send(can_indexs[i], can_tx);
                     usleep(50);
                     driver.receive(can_indexs[i], can_rx);
-                    usleep(50);
+                    // usleep(50);
                 }
                 rs_decode(can_rx, data, data_motor);
 
-                if(data.id == can_ids[0])
+                if (data.id == can_ids[0])
                     spdlog::info("motor {} pos : {}", data.id, data.pos);
             }
-
 
             loop_rate.sleep();
         }
