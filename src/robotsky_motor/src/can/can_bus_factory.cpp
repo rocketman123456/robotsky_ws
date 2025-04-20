@@ -5,8 +5,6 @@
 
 std::shared_ptr<CANBusManager> create_can_bus_manager(CanType type)
 {
-    auto can_bus_manager = std::make_shared<CANBusManager>();
-
     switch (type)
     {
         case CanType::DM:

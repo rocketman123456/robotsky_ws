@@ -83,18 +83,22 @@ void CANBusManager::step()
     //         // motor->updateState(receivedFrame); // 具体解析逻辑由各电机实现
     //     }
     // }
-
-    // 等待直到下一个时间点
-    std::this_thread::sleep_until(next_time);
-    next_time += interval;
 }
 
 void CANBusManager::run()
 {
     set_thread(cpu_core, pthread_self());
 
+    counter.start();
+
     while (running.load())
     {
         step();
+
+        counter.update();
+
+        // 等待直到下一个时间点
+        std::this_thread::sleep_until(next_time);
+        next_time += interval;
     }
 }

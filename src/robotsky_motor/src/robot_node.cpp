@@ -1,5 +1,7 @@
+#include "can/can_data.h"
 #include "motor/motor_data.h"
 #include "robot/robot.h"
+#include "utils/fps_counter.h"
 #include "utils/utils.h"
 
 #include <rclcpp/rclcpp.hpp>
@@ -53,87 +55,61 @@ std::vector<MotorInitInfo> prepare_motor()
     return motor_infos;
 }
 
+std::vector<CanBusInitInfo> prepare_can_bus()
+{
+    std::vector<CanBusInitInfo> can_bus_infos;
+
+    // TODO : 这里需要根据实际情况设置 CPU 核心和 CAN 总线索引
+    can_bus_infos.push_back({
+        CanType::DM,
+        0,
+        {0, 1, 2, 3},
+        {0, 1, 2, 3},
+    });
+    can_bus_infos.push_back({
+        CanType::RS,
+        1,
+        {4, 5, 6, 7},
+        {4, 5, 6, 7},
+    });
+
+    return can_bus_infos;
+}
+
 int main(int argc, char** argv)
 {
     rclcpp::init(argc, argv);
 
     auto robot = std::make_shared<Robot>();
 
-    std::vector<CanInitInfo>   can_infos   = prepare_can();
-    std::vector<MotorInitInfo> motor_infos = prepare_motor();
+    std::vector<CanInitInfo>    can_infos     = prepare_can();
+    std::vector<MotorInitInfo>  motor_infos   = prepare_motor();
+    std::vector<CanBusInitInfo> can_bus_infos = prepare_can_bus();
 
     robot->initCAN(can_infos);
     robot->initMotors(motor_infos);
+    robot->initCANBus(can_bus_infos);
 
     double frequency_hz = 500;
     auto   interval     = Duration(1.0 / frequency_hz);
     auto   next_time    = Clock::now() + interval;
 
-    const int num_iterations = 1000;
+    FPSCounter fps_counter(true);
 
-    std::vector<double> freqs;
-    freqs.resize(num_iterations + 1);
-
-    set_thread(0, pthread_self());
-
-    uint64_t count = 0;
-    uint64_t index = 0;
-
-    // 记录第一次迭代的起始时间
-    TimePoint prev = Clock::now();
+    fps_counter.start();
 
     try
     {
         while (rclcpp::ok())
         {
             // TODO : task
+            // robot send cmd to motor
+            // robot update motor state
+            // send robot joint state msg
 
             rclcpp::spin_some(robot);
 
-            // 迭代完成后，记录当前时间
-            TimePoint now = Clock::now();
-            // 计算两次迭代间隔（秒）
-            Duration dt = now - prev;
-            prev        = now;
-
-            // 跳过第一次，因为还没频率可算
-            if (count > 0)
-            {
-                double interval = dt.count();
-                if (interval > 0.0)
-                {
-                    // freqs.push_back(1.0 / interval);
-                    freqs[index] = 1.0 / interval;
-                }
-            }
-
-            if (count > 0 && count % num_iterations == 0)
-            {
-                // 计算平均频率
-                double sum = std::accumulate(freqs.begin(), freqs.end(), 0.0);
-                // double mean = sum / (freqs.size());
-                double mean = sum / (index + 1);
-
-                // 计算方差
-                double sq_sum = 0.0;
-                for (double f : freqs)
-                {
-                    double diff = f - mean;
-                    sq_sum += diff * diff;
-                }
-                double variance = sq_sum / freqs.size();
-
-                spdlog::info("Average frequency: {} Hz", mean);
-                spdlog::info("Variance: {} (Hz^2)", variance);
-
-                // freqs.clear();
-                // freqs.reserve(num_iterations + 1);
-
-                index = -1;
-            }
-
-            count++;
-            index++;
+            fps_counter.update();
 
             // 等待直到下一个时间点
             std::this_thread::sleep_until(next_time);
