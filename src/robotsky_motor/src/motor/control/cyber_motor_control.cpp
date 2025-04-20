@@ -1,4 +1,4 @@
-#include "motor/cyber_motor_control.h"
+#include "motor/control/cyber_motor_control.h"
 #include "motor/utils/cyber_gear_utils.h"
 
 void CyberMotorControl::setZero() { cyber_set_zero(id, can_tx); }

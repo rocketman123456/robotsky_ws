@@ -1,12 +1,11 @@
 #pragma once
+#include "motor/control/motor_control.h"
 
-#include "motor/motor_control.h"
-
-class DMMotorControl : public MotorControl
+class CyberMotorControl : public MotorControl
 {
 public:
-    DMMotorControl()          = default;
-    virtual ~DMMotorControl() = default;
+    CyberMotorControl()          = default;
+    virtual ~CyberMotorControl() = default;
 
     virtual void setZero();
     virtual void enable();

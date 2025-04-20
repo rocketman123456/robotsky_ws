@@ -1,8 +1,8 @@
 #include "motor/motor_factory.h"
 
-#include "motor/cyber_motor_control.h"
-#include "motor/dm_motor_control.h"
-#include "motor/rs_motor_control.h"
+#include "motor/control/cyber_motor_control.h"
+#include "motor/control/dm_motor_control.h"
+#include "motor/control/rs_motor_control.h"
 
 std::shared_ptr<MotorControl> create_motor_control(const MotorInitInfo& info)
 {

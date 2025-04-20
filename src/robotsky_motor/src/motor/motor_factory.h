@@ -1,6 +1,6 @@
 #pragma once
 
-#include "motor/motor_control.h"
+#include "motor/control/motor_control.h"
 
 #include <memory>
 

@@ -1,4 +1,4 @@
-#include "motor/motor_control.h"
+#include "motor/control/motor_control.h"
 
 #include <spdlog/spdlog.h>
 

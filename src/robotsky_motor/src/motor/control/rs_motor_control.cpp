@@ -1,4 +1,4 @@
-#include "motor/rs_motor_control.h"
+#include "motor/control/rs_motor_control.h"
 #include "motor/utils/rs_motor_utils.h"
 
 void RSMotorControl::setZero() { rs_save_pos_zero(can_tx, id); }

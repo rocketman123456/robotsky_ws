@@ -1,4 +1,4 @@
-#include "motor/dm_motor_control.h"
+#include "motor/control/dm_motor_control.h"
 #include "motor/utils/dm_motor_utils.h"
 
 void DMMotorControl::setZero() { dm_save_pos_zero(can_tx, id, DM_MIT_MODE); }

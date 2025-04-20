@@ -1,9 +1,10 @@
 #pragma once
 
 #include "can/can_interface.h"
-#include "motor/motor_control.h"
+#include "motor/control/motor_control.h"
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <mutex>
 #include <queue>
@@ -14,8 +15,8 @@ class CANBusManager
 {
 public:
     // 构造函数：绑定到某个CAN接口，并关联该接口上的电机列表
-    CANBusManager()  = default;
-    ~CANBusManager() = default;
+    CANBusManager()          = default;
+    virtual ~CANBusManager() = default;
 
     void addCAN(std::shared_ptr<CANInterface> can);
     void addMotor(std::shared_ptr<MotorControl> motor);
@@ -32,7 +33,8 @@ public:
 
 private:
     // 专用线程函数
-    void run();
+    virtual void step();
+    virtual void run();
 
 public:
     // 内部CAN接口
@@ -41,10 +43,13 @@ public:
     // 该总线上的电机集合
     std::vector<std::shared_ptr<MotorControl>> motors;
 
-    // // 用于发送命令的队列及同步原语
-    // std::queue<std::vector<uint8_t>> send_queue;
-    // std::mutex                       send_mutex;
-    // std::condition_variable          send_cv;
+    using Clock     = std::chrono::high_resolution_clock; // steady_clock
+    using Duration  = std::chrono::duration<double>;
+    using TimePoint = std::chrono::time_point<Clock, Duration>;
+
+    double    frequency_hz = 500;
+    Duration  interval     = Duration(1.0 / frequency_hz);
+    TimePoint next_time    = Clock::now() + interval;
 
     // 用于停止线程
     std::atomic<bool> running;
