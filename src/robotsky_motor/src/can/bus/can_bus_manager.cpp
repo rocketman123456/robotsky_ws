@@ -87,7 +87,7 @@ void CANBusManager::step()
 
 void CANBusManager::run()
 {
-    set_thread(cpu_core, pthread_self());
+    set_thread(cpu_core, worker_thread.native_handle());
 
     counter.start();
 

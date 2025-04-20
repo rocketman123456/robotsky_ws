@@ -10,6 +10,7 @@
 
 #include <chrono>
 #include <memory>
+#include <thread>
 
 // using namespace std::chrono;
 using Clock     = std::chrono::high_resolution_clock;
@@ -93,6 +94,10 @@ int main(int argc, char** argv)
     double frequency_hz = 500;
     auto   interval     = Duration(1.0 / frequency_hz);
     auto   next_time    = Clock::now() + interval;
+
+    auto thread_id     = std::this_thread::get_id();
+    auto native_handle = *reinterpret_cast<std::thread::native_handle_type*>(&thread_id);
+    set_thread(0, native_handle);
 
     FPSCounter fps_counter(true);
 
