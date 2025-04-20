@@ -1,31 +1,27 @@
 #include "can/bus/can_bus_manager.h"
+#include "robot/robot_data.h"
+#include "utils/utils.h"
 
 #include <spdlog/spdlog.h>
 
+#include <cassert>
 #include <chrono>
 #include <iostream>
 #include <memory>
 
-// CANBusManager::CANBusManager(const std::string& can_name)
-//     : running(false)
-// {
-//     CanInitInfo info(can_name);
-//     can_interface = std::make_shared<CANInterface>();
-//     can_interface->initialize(info);
-// }
-
-// CANBusManager::~CANBusManager()
-// {
-//     stop();
-//     // can_interface->finalize();
-// }
-
-void CANBusManager::addCAN(std::shared_ptr<CANInterface> can) { can_interface = can; }
-
-void CANBusManager::addMotor(std::shared_ptr<MotorControl> motor)
+void CANBusManager::initialize(const CanBusInitInfo& info)
 {
-    // TODO : check motor's can index
-    motors.push_back(motor);
+    type          = info.type;
+    cpu_core      = info.cpu_core;
+    can_indices   = info.can_indices;
+    motor_indices = info.motor_indices;
+}
+
+void CANBusManager::setRobotData(std::shared_ptr<RobotData> data)
+{
+    // set data pointer
+    assert(data != nullptr && "robot data pointer is null");
+    this->data = data;
 }
 
 void CANBusManager::start()
@@ -43,11 +39,13 @@ void CANBusManager::stop()
 
 void updateCmd(std::shared_ptr<MotorCmd> cmd)
 {
+    assert(cmd != nullptr && "motor cmd pointer is null");
     //
 }
 
-void updateState(std::shared_ptr<MotorState> cmd)
+void updateState(std::shared_ptr<MotorState> state)
 {
+    assert(state != nullptr && "motor state pointer is null");
     //
 }
 
@@ -93,6 +91,8 @@ void CANBusManager::step()
 
 void CANBusManager::run()
 {
+    set_thread(cpu_core, pthread_self());
+
     while (running.load())
     {
         step();

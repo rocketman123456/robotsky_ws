@@ -10,22 +10,20 @@ enum class CanType : uint32_t
     RS,
     CYBER,
     LK,
+    NONE,
 };
 
 struct CanInitInfo
 {
-    CanInitInfo(const std::string& port)
-        : can_port(port)
-    {}
-    ~CanInitInfo() = default;
-
-    std::string can_port;
+    std::string can_port = "";
 };
 
 struct CanBusInitInfo
 {
-    CanType type;
+    CanType type = CanType::NONE;
 
-    std::vector<uint16_t> can_indices;
-    std::vector<uint16_t> motor_indices;
+    uint16_t cpu_core = 0;
+
+    std::vector<uint16_t> can_indices   = {};
+    std::vector<uint16_t> motor_indices = {};
 };

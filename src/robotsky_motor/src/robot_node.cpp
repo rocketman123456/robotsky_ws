@@ -1,14 +1,18 @@
-#include <rclcpp/rclcpp.hpp>
-
 #include "motor/motor_data.h"
 #include "robot/robot.h"
+#include "utils/utils.h"
+
+#include <rclcpp/rclcpp.hpp>
 
 #include <spdlog/spdlog.h>
 
 #include <chrono>
 #include <memory>
-#include <pthread.h>
-#include <sched.h>
+
+// using namespace std::chrono;
+using Clock     = std::chrono::high_resolution_clock;
+using TimePoint = Clock::time_point;
+using Duration  = std::chrono::duration<double>;
 
 std::vector<CanInitInfo> prepare_can()
 {
@@ -61,26 +65,6 @@ int main(int argc, char** argv)
     robot->initCAN(can_infos);
     robot->initMotors(motor_infos);
 
-    cpu_set_t cpuset;
-    CPU_ZERO(&cpuset);
-    CPU_SET(0, &cpuset); // Set CPU core 0
-    if (sched_setaffinity(0, sizeof(cpu_set_t), &cpuset) == -1)
-    {
-        spdlog::error("Failed to set CPU affinity");
-        exit(-1);
-    }
-
-    sched_param param;
-    int         policy;
-    pthread_getschedparam(pthread_self(), &policy, &param);
-    param.sched_priority = 1; // 20
-    pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);
-
-    using namespace std::chrono;
-    using Clock     = std::chrono::high_resolution_clock;
-    using TimePoint = Clock::time_point;
-    using Duration  = std::chrono::duration<double>;
-
     double frequency_hz = 500;
     auto   interval     = Duration(1.0 / frequency_hz);
     auto   next_time    = Clock::now() + interval;
@@ -90,6 +74,8 @@ int main(int argc, char** argv)
     std::vector<double> freqs;
     freqs.resize(num_iterations + 1);
 
+    set_thread(0, pthread_self());
+
     uint64_t count = 0;
     uint64_t index = 0;
 
@@ -98,10 +84,12 @@ int main(int argc, char** argv)
 
     try
     {
-        // rclcpp::Rate loop_rate(500);
-
         while (rclcpp::ok())
         {
+            // TODO : task
+
+            rclcpp::spin_some(robot);
+
             // 迭代完成后，记录当前时间
             TimePoint now = Clock::now();
             // 计算两次迭代间隔（秒）
@@ -141,19 +129,15 @@ int main(int argc, char** argv)
                 // freqs.clear();
                 // freqs.reserve(num_iterations + 1);
 
-                index = 0;
+                index = -1;
             }
 
             count++;
             index++;
 
-            rclcpp::spin_some(robot);
-
             // 等待直到下一个时间点
             std::this_thread::sleep_until(next_time);
             next_time += interval;
-
-            // loop_rate.sleep();
         }
     }
     catch (std::runtime_error& e)

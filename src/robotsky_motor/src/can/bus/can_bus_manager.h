@@ -9,7 +9,10 @@
 #include <mutex>
 #include <queue>
 #include <thread>
+#include <unordered_map>
 #include <vector>
+
+struct RobotData;
 
 class CANBusManager
 {
@@ -18,30 +21,41 @@ public:
     CANBusManager()          = default;
     virtual ~CANBusManager() = default;
 
-    void addCAN(std::shared_ptr<CANInterface> can);
-    void addMotor(std::shared_ptr<MotorControl> motor);
+    void initialize(const CanBusInitInfo& info);
+
+    void setRobotData(std::shared_ptr<RobotData> data);
+
+    // void addCAN(std::shared_ptr<CANInterface> can, uint16_t index);
+    // void addMotor(std::shared_ptr<MotorControl> motor);
 
     // 启动专用线程，处理CAN总线的收发和数据更新
     void start();
     void stop();
 
-    // 外部可以调用发送接口，将待发送数据放入队列中
-    // void queueSendCommand(const std::vector<uint8_t>& frameData);
-
     void updateCmd(std::shared_ptr<MotorCmd> cmd);
-    void updateState(std::shared_ptr<MotorState> cmd);
+    void updateState(std::shared_ptr<MotorState> state);
 
-private:
+protected:
     // 专用线程函数
     virtual void step();
     virtual void run();
 
 public:
-    // 内部CAN接口
-    std::shared_ptr<CANInterface> can_interface;
+    std::shared_ptr<RobotData> data;
 
-    // 该总线上的电机集合
-    std::vector<std::shared_ptr<MotorControl>> motors;
+    CanType type = CanType::NONE;
+
+    uint16_t cpu_core = 0;
+
+    std::vector<uint16_t> can_indices;
+    std::vector<uint16_t> motor_indices;
+
+    // // 内部CAN接口
+    // std::unordered_map<uint16_t, uint16_t>     can_index_map;
+    // std::vector<std::shared_ptr<CANInterface>> can_interfaces;
+
+    // // 该总线上的电机集合
+    // std::vector<std::shared_ptr<MotorControl>> motors;
 
     using Clock     = std::chrono::high_resolution_clock; // steady_clock
     using Duration  = std::chrono::duration<double>;

@@ -35,9 +35,8 @@ add_library(robotsky_motor_lib
   src/can/can_interface.cpp
   src/can/can_utils.cpp
   src/can/old/can_driver.cpp
+  src/utils/utils.cpp
   src/robot/robot.cpp
-
-  # src/can/can_driver.cpp
 )
 target_link_libraries(robotsky_motor_lib
   spdlog::spdlog

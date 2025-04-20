@@ -21,8 +21,8 @@ int main(int argc, char** argv)
 
     std::vector<CanInitInfo> can_infos;
 
-    can_infos.emplace_back("can2");
-    can_infos.emplace_back("can3");
+    can_infos.push_back({"can2"});
+    can_infos.push_back({"can3"});
 
     driver.initialize(can_infos);
 

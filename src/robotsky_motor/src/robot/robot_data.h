@@ -13,7 +13,7 @@ enum class RobotState : uint16_t
 {
     IDLE,
     RUNNING,
-    ERROR
+    ERROR,
 };
 
 struct RobotData

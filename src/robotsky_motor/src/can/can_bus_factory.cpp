@@ -10,9 +10,9 @@ std::shared_ptr<CANBusManager> create_can_bus_manager(CanType type)
     switch (type)
     {
         case CanType::DM:
-            return {};
+            return std::make_shared<DMCANBusManager>();
         case CanType::RS:
-            return {};
+            return std::make_shared<RSCANBusManager>();
         case CanType::CYBER:
             return {};
         case CanType::LK:
