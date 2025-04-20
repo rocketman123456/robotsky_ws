@@ -42,12 +42,18 @@ void Robot::initMotors(const std::vector<MotorInitInfo>& motor_infos)
 
 void Robot::start()
 {
-    //
+    for (auto& can_bus : data->can_buses)
+    {
+        can_bus->start();
+    }
 }
 
 void Robot::stop()
 {
-    //
+    for (auto& can_bus : data->can_buses)
+    {
+        can_bus->stop();
+    }
 }
 
 void Robot::mainLoop()
