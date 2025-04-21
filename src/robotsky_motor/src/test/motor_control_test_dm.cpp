@@ -38,11 +38,17 @@ int main(int argc, char** argv)
         0.0, 0.0, // RB
         0.0, 0.0, // LB
     };
+    float vel[] = {
+        0.0, -0.0, // RF
+        0.0, 0.0, // LF
+        0.0, -0.0, // RB
+        0.0, 0.0, // LB
+    };
     float kp[] = {
-        10.0, 0.0, // RF
-        10.0, 0.0, // LF
-        10.0, 0.0, // RB
-        10.0, 0.0, // LB
+        30.0, 0.0, // RF
+        30.0, 0.0, // LF
+        30.0, 0.0, // RB
+        30.0, 0.0, // LB
     };
     float kd[] = {
         1.0, 2.0, // RF
@@ -50,6 +56,10 @@ int main(int argc, char** argv)
         1.0, 2.0, // RB
         1.0, 2.0, // LB
     };
+
+    float pos_fb[16] = {0};
+    float vel_fb[16] = {0};
+    float tau_fb[16] = {0};
 
     uint16_t motor_count = 8;
 
@@ -76,7 +86,7 @@ int main(int argc, char** argv)
         {
             for (int i = 0; i < motor_count; ++i)
             {
-                dm_mit_ctrl(can_tx, can_ids[i], pos[i], 0.0f, kp[i], kd[i], 0.0f);
+                dm_mit_ctrl(can_tx, can_ids[i], pos[i], vel[i], kp[i], kd[i], 0.0f);
                 {
                     driver.send(can_indexs[i], can_tx);
                     usleep(50);
@@ -87,6 +97,10 @@ int main(int argc, char** argv)
 
                 // if(data.id == can_ids[6])
                 //     spdlog::info("motor {} pos : {}", data.id, data.pos);
+
+                pos_fb[data.id - 1] = data.pos;
+                vel_fb[data.id - 1] = data.vel;
+                // tau_fb[data.id - 1] = data.tau;
             }
 
             loop_rate.sleep();

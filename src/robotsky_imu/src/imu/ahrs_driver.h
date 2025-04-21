@@ -10,6 +10,7 @@
 #include <geometry_msgs/msg/twist.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
+#include "tf2_ros/transform_broadcaster.h"
 
 #include <Eigen/Eigen>
 #include <Eigen/Geometry>
@@ -91,6 +92,8 @@ namespace FDILink
         rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr       _imu_pub;
         rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr _gps_pub;
         rclcpp::Publisher<geometry_msgs::msg::Pose2D>::SharedPtr  _mag_pose_pub;
+
+        std::shared_ptr<tf2_ros::TransformBroadcaster> _tf_broadcaster;
     }; // ahrsBringup
 } // namespace FDILink
 

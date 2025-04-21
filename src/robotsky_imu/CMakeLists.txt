@@ -12,6 +12,8 @@ find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(serial REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 find_package(spdlog REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -32,6 +34,8 @@ ament_target_dependencies(robotsky_imu_lib
   sensor_msgs
   geometry_msgs
   serial
+  tf2
+  tf2_ros
 )
 
 add_executable(imu_node

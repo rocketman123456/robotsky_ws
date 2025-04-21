@@ -32,24 +32,30 @@ int main(int argc, char** argv)
     uint16_t can_ids[]    = {0x02, 0x03, 0x06, 0x07, 0x0a, 0x0b, 0x0e, 0x0f};
     uint16_t can_indexs[] = {0, 0, 0, 0, 1, 1, 1, 1};
 
+    float delta   = 360.0f / 7.75f / 180.0f * M_PI;
+
     float pos[] = {
-        -0.6, 1.2, // RF
-        0.6, -1.2, // LF
-        0.6, -1.2, // RB
-        -0.6, 1.2, // LB
+        0.0-0.6, 1.2-0.0, // RF
+        0.0+0.6, -1.2-0.0, // LF
+        0.0+0.6, -1.2-0.0, // RB
+        0.0-0.6, 1.2-0.0, // LB
     };
     float kp[] = {
-        0.0, 0.0, // RF
-        0.0, 0.0, // LF
-        0.0, 0.0, // RB
-        0.0, 0.0, // LB
+        30.0, 60.0, // RF
+        30.0, 60.0, // LF
+        30.0, 60.0, // RB
+        30.0, 60.0, // LB
     };
     float kd[] = {
-        1.0, 1.0, // RF
-        1.0, 1.0, // LF
-        1.0, 1.0, // RB
-        1.0, 1.0, // LB
+        1.0, 2.0, // RF
+        1.0, 2.0, // LF
+        1.0, 2.0, // RB
+        1.0, 2.0, // LB
     };
+
+    float pos_fb[16] = {0};
+    float vel_fb[16] = {0};
+    float tau_fb[16] = {0};
 
     uint16_t motor_count = 8;
 
@@ -110,10 +116,15 @@ int main(int argc, char** argv)
                 }
                 rs_decode(can_rx, data, data_motor);
 
-                if(data.id == can_ids[0])
-                    spdlog::info("motor {} pos : {}", data.id, data.pos);
-            }
+                pos_fb[data.id - 1] = data.pos;
+                vel_fb[data.id - 1] = data.vel;
+                tau_fb[data.id - 1] = data.tau;
 
+                // if(data.id == can_ids[3])
+                //     spdlog::info("motor {} - pos : {}, vel : {}, tau : {}", data.id, data.pos, data.vel, data.tau);
+
+                spdlog::info("motor {} - pos : {}, vel : {}, tau : {}", can_ids[i], pos_fb[can_ids[i] - 1], vel_fb[can_ids[i] - 1], tau_fb[can_ids[i] - 1]);
+            }
 
             loop_rate.sleep();
         }

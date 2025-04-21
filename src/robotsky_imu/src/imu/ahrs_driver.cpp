@@ -29,6 +29,8 @@ namespace FDILink
         _gps_pub      = this->create_publisher<sensor_msgs::msg::NavSatFix>("/gps/fix", 10);
         _mag_pose_pub = this->create_publisher<geometry_msgs::msg::Pose2D>(_mag_pose_2d_topic, 10);
 
+        _tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(*this);
+
         // setp up serial
         try
         {
@@ -514,7 +516,8 @@ namespace FDILink
         RCLCPP_INFO(this->get_logger(), "AhrsBringup::processLoop: start");
 
         // convert imu frame into body frame
-        // _rot_mat << 0, -1, 0, 1, 0, 0, 0, 0, 1;
+        // TODO: check the rotation matrix
+        // _rot_mat << 0, -1, 0, 1, 0, 0, 0, 0, 1; // rot z 90
         // _rot_mat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
         // _rot_mat << 1, 0, 0, 0, -1, 0, 0, 0, -1;
         _rot_mat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
@@ -567,6 +570,7 @@ namespace FDILink
             sensor_msgs::msg::Imu imu_data;
             imu_data.header.stamp    = this->now();
             imu_data.header.frame_id = _imu_frame_id;
+
             Eigen::Quaterniond q_ahrs(
                 _ahrs_frame.frame.data.data_pack.Qw,
                 _ahrs_frame.frame.data.data_pack.Qx,
@@ -692,6 +696,22 @@ namespace FDILink
             double magyaw = magCalculateYaw(0, 0, magx, magy, magz);
             pose_2d.theta = magyaw;
             _mag_pose_pub->publish(pose_2d);
+
+            geometry_msgs::msg::TransformStamped t;
+            t.header.stamp    = imu_data.header.stamp;     // 与 IMU 同步
+            t.header.frame_id = "world";               // 父坐标系
+            t.child_frame_id  = _imu_frame_id;  // 子坐标系（通常是 imu_link）
+
+            // 平移设为零（如果 IMU 固定不动的话）
+            t.transform.translation.x = 0.0;
+            t.transform.translation.y = 0.0;
+            t.transform.translation.z = 0.0;
+
+            // 旋转直接用 IMU 的 orientation
+            t.transform.rotation = imu_data.orientation;
+            
+            // 发布
+            _tf_broadcaster->sendTransform(t);
         }
     }
 } // namespace FDILink
