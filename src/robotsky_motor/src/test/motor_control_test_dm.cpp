@@ -21,8 +21,8 @@ int main(int argc, char** argv)
 
     std::vector<CanInitInfo> can_infos;
 
-    can_infos.emplace_back("can0");
-    can_infos.emplace_back("can1");
+    can_infos.push_back({"can0"});
+    can_infos.push_back({"can1"});
 
     driver.initialize(can_infos);
 
@@ -33,10 +33,14 @@ int main(int argc, char** argv)
     uint16_t can_indexs[] = {0, 0, 0, 0, 1, 1, 1, 1};
 
     float pos[] = {
-        0.0, 0.0, // RF
-        0.0, 0.0, // LF
-        0.0, 0.0, // RB
-        0.0, 0.0, // LB
+        0.0,
+        0.0, // RF
+        0.0,
+        0.0, // LF
+        0.0,
+        0.0, // RB
+        0.0,
+        0.0, // LB
     };
     float vel[] = {
         0.0, -0.0, // RF

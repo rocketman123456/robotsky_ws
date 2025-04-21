@@ -11,16 +11,16 @@
 
 struct cyber_motor_data_t
 {
-    uint16_t can_id  = 0;
-    double   pos     = 0.0;
-    double   vel     = 0.0;
-    double   tau     = 0.0;
-    double   tmp     = 0.0;
-    double   pos_des = 0.0;
-    double   vel_des = 0.0;
-    double   tau_des = 0.0;
-    double   kp      = 0.0;
-    double   kd      = 0.0;
+    uint16_t can_id = 0;
+    double   pos    = 0.0;
+    double   vel    = 0.0;
+    double   tau    = 0.0;
+    double   tmp    = 0.0;
+    // double   pos_des = 0.0;
+    // double   vel_des = 0.0;
+    // double   tau_des = 0.0;
+    // double   kp      = 0.0;
+    // double   kd      = 0.0;
 };
 
 enum class can_msg_type : uint32_t
@@ -43,12 +43,11 @@ void cyber_set_single_param(uint16_t id, uint16_t index, can_frame& frame);
 void cyber_enable(uint16_t id, can_frame& frame);
 void cyber_disable(uint16_t id, can_frame& frame);
 void cyber_set_zero(uint16_t id, can_frame& frame);
-void cyber_mixed_control(uint16_t id, cyber_motor_data_t& data, can_frame& frame);
+void cyber_mixed_control(uint16_t id, float pos_des, float vel_des, float kp, float kd, float tau_des, can_frame& frame);
 void cyber_set_torque_limit(uint16_t id, float limit, can_frame& frame);
-
 void cyber_get_single_param(uint16_t id, uint16_t index, can_frame& frame);
-bool cyber_get_feedback(const can_frame& frame, cyber_motor_data_t& data);
 
+bool  cyber_get_feedback(const can_frame& frame, cyber_motor_data_t& data);
 float cyber_decode_float_param(can_frame& frame);
-void  cyber_encode(uint16_t id, can_msg_type type, can_frame& frame);
-void  cyber_decode(const can_frame& frame);
+
+void cyber_encode(uint16_t id, can_msg_type type, can_frame& frame, uint16_t* cyber_data, uint16_t slave_id);

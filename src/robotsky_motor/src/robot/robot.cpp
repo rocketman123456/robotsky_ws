@@ -1,11 +1,12 @@
 #include "robot/robot.h"
+#include "can/can_bus_factory.h"
 #include "motor/motor_factory.h"
-
-#include <chrono>
 
 Robot::Robot()
     : Node("robotsky_motor")
-{}
+{
+    data = std::make_shared<RobotData>();
+}
 
 void Robot::initCAN(const std::vector<CanInitInfo>& can_infos)
 {
@@ -13,11 +14,19 @@ void Robot::initCAN(const std::vector<CanInitInfo>& can_infos)
     {
         auto can_interface = std::make_shared<CANInterface>();
         can_interface->initialize(info);
-        can_interfaces.push_back(can_interface);
 
-        auto can_bus = std::make_shared<CANBusManager>();
-        can_bus->addCAN(can_interface);
-        can_buses.push_back(can_bus);
+        data->can_interfaces.push_back(can_interface);
+    }
+}
+
+void Robot::initCANBus(const std::vector<CanBusInitInfo>& bus_infos)
+{
+    for (const auto& info : bus_infos)
+    {
+        auto can_bus = create_can_bus_manager(info.type);
+        // can_interface->initialize(info);
+
+        data->can_buses.push_back(can_bus);
     }
 }
 
@@ -25,26 +34,34 @@ void Robot::initMotors(const std::vector<MotorInitInfo>& motor_infos)
 {
     for (const auto& info : motor_infos)
     {
-        info;
+        auto motor = create_motor_control(info);
+
+        data->motors.push_back(motor);
     }
 }
 
 void Robot::start()
 {
-    //
+    for (auto& can_bus : data->can_buses)
+    {
+        can_bus->start();
+    }
 }
 
 void Robot::stop()
 {
-    //
+    for (auto& can_bus : data->can_buses)
+    {
+        can_bus->stop();
+    }
 }
 
 void Robot::mainLoop()
 {
     using namespace std::chrono;
-    double frequencyHz = 500;
-    auto   interval    = duration<double>(1.0 / frequencyHz);
-    auto   next_time   = steady_clock::now() + interval;
+    double frequency_hz = 500;
+    auto   interval     = duration<double>(1.0 / frequency_hz);
+    auto   next_time    = steady_clock::now() + interval;
 
     while (running)
     {
@@ -57,7 +74,7 @@ void Robot::mainLoop()
 
 void Robot::updateFromCAN(int motorId, double pos, double vel, double torque)
 {
-    auto& motor = motor_states[motorId];
+    auto& motor = data->motor_states[motorId];
 
     std::lock_guard<std::mutex> lock(motor->mutex);
     motor->pos          = pos;
@@ -69,7 +86,7 @@ void Robot::updateFromCAN(int motorId, double pos, double vel, double torque)
 
 void Robot::updateExternalCommand(int motorId, MotorMode mode)
 {
-    auto& motor = motor_cmds[motorId];
+    auto& motor = data->motor_cmds[motorId];
 
     std::lock_guard<std::mutex> lock(motor->mutex);
     motor->mode = mode;
@@ -78,7 +95,7 @@ void Robot::updateExternalCommand(int motorId, MotorMode mode)
 void Robot::checkStateTimeouts()
 {
     auto now = std::chrono::steady_clock::now();
-    for (auto& motor : motor_states)
+    for (auto& motor : data->motor_states)
     {
         std::lock_guard<std::mutex> lock(motor->mutex);
 
@@ -93,7 +110,7 @@ void Robot::checkStateTimeouts()
 void Robot::checkCmdTimeouts()
 {
     auto now = std::chrono::steady_clock::now();
-    for (auto& motor : motor_cmds)
+    for (auto& motor : data->motor_cmds)
     {
         std::lock_guard<std::mutex> lock(motor->mutex);
 
@@ -111,7 +128,7 @@ void Robot::tickStateMachine()
     // checkCmdTimeouts();
 
     bool hasTimeout = false;
-    for (auto& motor : motor_states)
+    for (auto& motor : data->motor_states)
     {
         std::lock_guard<std::mutex> lock(motor->mutex);
         if (motor->health == MotorHealth::TIMEOUT)
@@ -130,16 +147,16 @@ void Robot::tickStateMachine()
     //     }
     // }
 
-    std::lock_guard<std::mutex> lock(state_mutex);
-    switch (state)
+    std::lock_guard<std::mutex> lock(data->state_mutex);
+    switch (data->state)
     {
         case RobotState::IDLE:
             if (!hasTimeout)
-                state = RobotState::RUNNING;
+                data->state = RobotState::RUNNING;
             break;
         case RobotState::RUNNING:
             if (hasTimeout)
-                state = RobotState::ERROR;
+                data->state = RobotState::ERROR;
             break;
         case RobotState::ERROR:
             // 可尝试恢复

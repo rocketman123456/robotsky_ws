@@ -1,4 +1,4 @@
-#include "motor/motor_control.h"
+#include "motor/control/motor_control.h"
 
 #include <spdlog/spdlog.h>
 
@@ -14,11 +14,7 @@ void MotorControl::initialize(const MotorInitInfo& info)
     tau_scalar = info.tau_scalar;
 }
 
-// void MotorControl::setZero() { cyber_set_zero(id, can_tx); }
-// void MotorControl::enable() { cyber_enable(id, can_tx); }
-// void MotorControl::disable() { cyber_disable(id, can_tx); }
-
-void MotorControl::setMixedControlInDeg(double pos, double vel, double tau, double kp, double kd)
+void MotorControl::forwardDataComputeDeg(double pos, double vel, double tau, double kp, double kd)
 {
     std::lock_guard<std::mutex> lock(cmd.mutex);
 
@@ -36,12 +32,9 @@ void MotorControl::setMixedControlInDeg(double pos, double vel, double tau, doub
     cmd.kd  = kd;
 
     cmd.last_tx_time = std::chrono::steady_clock::now();
-
-    // update can frame
-    // cyber_mixed_control(id, data, can_tx);
 }
 
-void MotorControl::setMixedControlInRad(double pos, double vel, double tau, double kp, double kd)
+void MotorControl::forwardDataComputeRad(double pos, double vel, double tau, double kp, double kd)
 {
     std::lock_guard<std::mutex> lock(cmd.mutex);
 
@@ -57,21 +50,21 @@ void MotorControl::setMixedControlInRad(double pos, double vel, double tau, doub
     cmd.kd  = kd;
 
     cmd.last_tx_time = std::chrono::steady_clock::now();
-
-    // update can frame
-    // cyber_mixed_control(id, data, can_tx);
 }
 
 void MotorControl::update()
 {
     // handle data
     std::lock_guard<std::mutex> lock(state.mutex);
+
     state.pos += delta;
     state.pos *= direction;
     state.pos /= pos_scalar;
     state.pos += offset;
+
     state.vel /= vel_scalar;
     state.vel *= direction;
+
     state.tau /= tau_scalar;
     state.tau *= direction;
 

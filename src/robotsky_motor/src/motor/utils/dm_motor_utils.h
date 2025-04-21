@@ -39,7 +39,7 @@ struct dm_motor_fb_t
     int   kd_int;
     float pos;
     float vel;
-    float tor;
+    float tau;
     float kp;
     float kd;
     float t_mos;

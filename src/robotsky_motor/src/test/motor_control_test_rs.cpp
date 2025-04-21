@@ -21,8 +21,8 @@ int main(int argc, char** argv)
 
     std::vector<CanInitInfo> can_infos;
 
-    can_infos.emplace_back("can2");
-    can_infos.emplace_back("can3");
+    can_infos.push_back({"can2"});
+    can_infos.push_back({"can3"});
 
     driver.initialize(can_infos);
 
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
             driver.send(can_indexs[i], can_tx);
             usleep(50);
             driver.receive(can_indexs[i], can_rx);
-            usleep(50);
+            // usleep(50);
         }
         rs_decode(can_rx, data, data_motor);
     }
@@ -112,7 +112,7 @@ int main(int argc, char** argv)
                     driver.send(can_indexs[i], can_tx);
                     usleep(50);
                     driver.receive(can_indexs[i], can_rx);
-                    usleep(50);
+                    // usleep(50);
                 }
                 rs_decode(can_rx, data, data_motor);
 
