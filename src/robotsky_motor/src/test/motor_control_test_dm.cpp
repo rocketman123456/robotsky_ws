@@ -32,15 +32,12 @@ int main(int argc, char** argv)
     uint16_t can_ids[]    = {0x01, 0x04, 0x05, 0x08, 0x09, 0x0c, 0x0d, 0x10};
     uint16_t can_indexs[] = {0, 0, 0, 0, 1, 1, 1, 1};
 
+    // clang-format off
     float pos[] = {
-        0.0,
-        0.0, // RF
-        0.0,
-        0.0, // LF
-        0.0,
-        0.0, // RB
-        0.0,
-        0.0, // LB
+        0.0, 0.0, // RF
+        0.0, 0.0, // LF
+        0.0, 0.0, // RB
+        0.0, 0.0, // LB
     };
     float vel[] = {
         0.0, -0.0, // RF
@@ -60,6 +57,7 @@ int main(int argc, char** argv)
         1.0, 2.0, // RB
         1.0, 2.0, // LB
     };
+    // clang-format on
 
     float pos_fb[16] = {0};
     float vel_fb[16] = {0};
