@@ -51,6 +51,8 @@ public:
     double torque_upper_limit = 12.0;
     double torque_lower_limit = -12.0;
 
+    MotorType type;
+
     MotorState state;
     MotorCmd   cmd;
 

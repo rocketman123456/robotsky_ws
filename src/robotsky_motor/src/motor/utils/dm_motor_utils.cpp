@@ -237,6 +237,7 @@ void dm_clear_err(can_frame& frame, uint16_t motor_id, uint16_t mode_id)
 **/
 void dm_decode(const can_frame& frame, dm_motor_fb_t& data)
 {
+    data.mst_id = frame.can_id;
     data.id     = (frame.data[0]) & 0x0F;
     data.state  = (frame.data[0]) >> 4;
     data.p_int  = (frame.data[1] << 8) | frame.data[2];

@@ -1,17 +1,12 @@
 #pragma once
 
+#include "motor/motor_data.h"
+
 #include <cstdint>
 #include <string>
 #include <vector>
 
-enum class CanType : uint32_t
-{
-    DM,
-    RS,
-    CYBER,
-    LK,
-    NONE,
-};
+using CanType = MotorType;
 
 struct CanInitInfo
 {

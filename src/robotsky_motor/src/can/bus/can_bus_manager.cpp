@@ -11,10 +11,30 @@
 
 void CANBusManager::initialize(const CanBusInitInfo& info)
 {
+    spdlog::info("can bus init: {}, {}", (int)info.type, info.cpu_core);
+
     type          = info.type;
     cpu_core      = info.cpu_core;
     can_indices   = info.can_indices;
     motor_indices = info.motor_indices;
+
+    if(data != nullptr)
+    {
+        // TODO : check can type
+        // check motor type
+        for (auto& index : motor_indices)
+        {
+            assert(index >= 0 && index < data->motors.size() && "motor index out of range");
+            if(data->motors[index]->type == type)
+            {
+                //
+            }
+            else
+            {
+                spdlog::warn("motor type mismatch");
+            }
+        }
+    }
 }
 
 void CANBusManager::setRobotData(std::shared_ptr<RobotData> data)

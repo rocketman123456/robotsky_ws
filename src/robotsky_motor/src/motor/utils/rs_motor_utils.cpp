@@ -7,7 +7,7 @@ rs_data_read_write::rs_data_read_write(const uint16_t* index_list)
     run_mode.index      = index_list[0];
     iq_ref.index        = index_list[1];
     spd_ref.index       = index_list[2];
-    imit_torque.index   = index_list[3];
+    limit_torque.index  = index_list[3];
     cur_kp.index        = index_list[4];
     cur_ki.index        = index_list[5];
     cur_filt_gain.index = index_list[6];
@@ -197,7 +197,7 @@ void rs_decode(const can_frame& frame, rs_motor_fb_t& data, rs_data_read_write& 
                         drw.spd_ref.data = rs_byte_to_float((uint8_t*)frame.data);
                         break;
                     case 3:
-                        drw.imit_torque.data = rs_byte_to_float((uint8_t*)frame.data);
+                        drw.limit_torque.data = rs_byte_to_float((uint8_t*)frame.data);
                         break;
                     case 4:
                         drw.cur_kp.data = rs_byte_to_float((uint8_t*)frame.data);

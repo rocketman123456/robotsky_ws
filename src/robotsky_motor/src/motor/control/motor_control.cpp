@@ -4,6 +4,13 @@
 
 void MotorControl::initialize(const MotorInitInfo& info)
 {
+    spdlog::info("Motor init: {}, {}, {}",
+        info.can_index,
+        info.id,
+        info.direction
+    );
+
+    type       = info.type;
     can_index  = info.can_index;
     id         = info.id;
     direction  = info.direction;

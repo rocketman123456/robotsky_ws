@@ -30,6 +30,7 @@ constexpr float DM_T_MAX  = 10.0f;
 // 电机回传信息结构体
 struct dm_motor_fb_t
 {
+    int   mst_id;
     int   id;
     int   state;
     int   p_int;

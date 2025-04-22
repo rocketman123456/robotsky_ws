@@ -8,6 +8,7 @@ public:
     RSCANBusManager();
     virtual ~RSCANBusManager() = default;
 
-protected:
+    virtual void enable();
+    virtual void disable();
     virtual void step();
 };

@@ -89,6 +89,12 @@ int main(int argc, char** argv)
 
     std::shared_ptr<RobotData> data = std::make_shared<RobotData>();
 
+    for (int i = 0; i < motor_infos.size(); ++i)
+    {
+        data->motor_states.push_back(std::make_shared<MotorState>());
+        data->motor_cmds.push_back(std::make_shared<MotorCmd>());
+    }
+
     for (const auto& info : can_infos)
     {
         auto can_interface = std::make_shared<CANInterface>();
@@ -106,6 +112,7 @@ int main(int argc, char** argv)
     for (const auto& info : can_bus_infos)
     {
         auto can_bus = create_can_bus_manager(info.type);
+        can_bus->setRobotData(data);
         can_bus->initialize(info);
         data->can_buses.push_back(can_bus);
     }
@@ -158,6 +165,9 @@ int main(int argc, char** argv)
     };
     // clang-format on
 
+    data->can_buses[0]->enable(); // DM
+    // data->can_buses[1]->enable(); // RS
+
     double frequency_hz = 200; // 500
     auto   interval     = Duration(1.0 / frequency_hz);
     auto   next_time    = Clock::now() + interval;
@@ -178,6 +188,9 @@ int main(int argc, char** argv)
             // robot update motor state
             // send robot joint state msg
 
+            data->can_buses[0]->step(); // DM
+            // data->can_buses[1]->step(); // RS
+
             rclcpp::spin_some(robot);
 
             fps_counter.update();
@@ -190,6 +203,11 @@ int main(int argc, char** argv)
     catch (std::runtime_error& e)
     {
         spdlog::warn("runtime error!");
+    }
+
+    for (int i = 0; i < can_bus_infos.size(); ++i)
+    {
+        data->can_buses[i]->disable();
     }
 
     for (auto can : data->can_interfaces)

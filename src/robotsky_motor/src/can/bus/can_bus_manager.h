@@ -23,22 +23,22 @@ public:
     virtual ~CANBusManager() = default;
 
     void initialize(const CanBusInitInfo& info);
-
     void setRobotData(std::shared_ptr<RobotData> data);
 
     // 启动专用线程，处理CAN总线的收发和数据更新
     void start();
     void stop();
 
+    virtual void enable() = 0;
+    virtual void disable() = 0;
+
     void updateCmd(std::shared_ptr<MotorCmd> cmd);
     void updateState(std::shared_ptr<MotorState> state);
 
-protected:
     // 专用线程函数
     virtual void step();
     virtual void run();
 
-public:
     std::shared_ptr<RobotData> data;
 
     CanType type = CanType::NONE;

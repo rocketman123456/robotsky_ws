@@ -76,7 +76,7 @@ public:
     rs_data_read_write_one run_mode;      // 0:运控模式 1:位置模式 2:速度模式 3:电流模式 4:零点模式 uint8  1byte
     rs_data_read_write_one iq_ref;        // 电流模式Iq指令  float 	4byte 	-23~23A
     rs_data_read_write_one spd_ref;       // 转速模式转速指令  float 	4byte 	-30~30rad/s
-    rs_data_read_write_one imit_torque;   // 转矩限制  float 	4byte 	0~12Nm
+    rs_data_read_write_one limit_torque;  // 转矩限制  float 	4byte 	0~12Nm
     rs_data_read_write_one cur_kp;        // 电流的 Kp  float 	4byte 	默认值 0.125
     rs_data_read_write_one cur_ki;        // 电流的 Ki  float 	4byte 	默认值 0.0158
     rs_data_read_write_one cur_filt_gain; // 电流滤波系数filt_gain  float 	4byte 	0~1.0，默认值0.1
