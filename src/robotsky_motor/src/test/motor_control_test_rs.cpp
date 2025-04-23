@@ -88,18 +88,6 @@ int main(int argc, char** argv)
         rs_decode(can_rx, data, data_motor);
     }
 
-    // for (int i = 0; i < motor_count; ++i)
-    // {
-    //     rs_get_motor_parameter(can_tx, can_ids[i], 0X7005);
-    //     {
-    //         driver.send(can_indexs[i], can_tx);
-    //         usleep(50);
-    //         driver.receive(can_indexs[i], can_rx);
-    //         usleep(50);
-    //     }
-    //     rs_decode(can_rx, data, data_motor);
-    // }
-
     spdlog::info("start");
 
     rclcpp::Rate loop_rate(200);
@@ -125,7 +113,8 @@ int main(int argc, char** argv)
                 // if(data.id == can_ids[3])
                 //     spdlog::info("motor {} - pos : {}, vel : {}, tau : {}", data.id, data.pos, data.vel, data.tau);
 
-                spdlog::info("motor {} - pos : {}, vel : {}, tau : {}", can_ids[i], pos_fb[can_ids[i] - 1], vel_fb[can_ids[i] - 1], tau_fb[can_ids[i] - 1]);
+                spdlog::info("motor {} - pos : {}, vel : {}, tau : {}", data.id, data.pos, data.vel, data.tau);
+                // spdlog::info("motor {} - pos : {}, vel : {}, tau : {}", can_ids[i], pos_fb[can_ids[i] - 1], vel_fb[can_ids[i] - 1], tau_fb[can_ids[i] - 1]);
             }
 
             loop_rate.sleep();

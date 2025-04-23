@@ -12,13 +12,25 @@ RSCANBusManager::RSCANBusManager()
     type = CanType::RS;
 }
 
-void RSCANBusManager::writeState(const rs_motor_fb_t& data_fb, const rs_data_read_write& data_motor)
+void RSCANBusManager::writeState(uint16_t index, const rs_motor_fb_t& data_fb, const rs_data_read_write& data_motor)
 {
     if (data_fb.id > 0 && data_fb.id <= data->motor_states.size())
     {
-        data->motor_states[data_fb.id - 1]->pos = data_fb.pos;
-        data->motor_states[data_fb.id - 1]->vel = data_fb.vel;
-        data->motor_states[data_fb.id - 1]->tau = data_fb.tau;
+        data->motors[data_fb.id - 1]->state.pos = data_fb.pos;
+        data->motors[data_fb.id - 1]->state.vel = data_fb.vel;
+        data->motors[data_fb.id - 1]->state.tau = data_fb.tau;
+
+        data->motors[data_fb.id - 1]->update();
+
+        data->motor_states[data_fb.id - 1]->pos = data->motors[data_fb.id - 1]->state.pos;
+        data->motor_states[data_fb.id - 1]->vel = data->motors[data_fb.id - 1]->state.pos;
+        data->motor_states[data_fb.id - 1]->tau = data->motors[data_fb.id - 1]->state.pos;
+    
+        spdlog::info("motor {} - pos : {}, vel : {}", 
+            data_fb.id,
+            data->motor_states[data_fb.id - 1]->pos,
+            data->motor_states[data_fb.id - 1]->vel
+        );
     }
     else
     {
@@ -51,7 +63,7 @@ void RSCANBusManager::enable()
 
         // spdlog::info("motor {} - pos : {}, vel : {}", data_fb.id, data_fb.pos, data_fb.vel);
 
-        writeState(data_fb, data_motor);
+        writeState(index, data_fb, data_motor);
     }
 
     spdlog::info("RSCANBusManager enable finish");
@@ -82,7 +94,7 @@ void RSCANBusManager::disable()
 
         // spdlog::info("motor {} - pos : {}, vel : {}", data_fb.id, data_fb.pos, data_fb.vel);
 
-        writeState(data_fb, data_motor);
+        writeState(index, data_fb, data_motor);
     }
 
     spdlog::info("RSCANBusManager disable finish");
@@ -99,6 +111,7 @@ void RSCANBusManager::step()
     {
         auto motor = data->motors[index];
         auto can = data->can_interfaces[motor->can_index];
+        auto cmd   = data->motor_cmds[index];
 
         motor->setMixedControlInRad(0.0, 0.0, 0.0, 0.0, 1.0);
 
@@ -109,8 +122,8 @@ void RSCANBusManager::step()
 
         rs_decode(can_rx, data_fb, data_motor);
 
-        spdlog::info("{} motor {} - pos : {}, vel : {}", index, data_fb.id, data_fb.pos, data_fb.vel);
+        // spdlog::info("{} motor {} - pos : {}, vel : {}", index, data_fb.id, data_fb.pos, data_fb.vel);
 
-        writeState(data_fb, data_motor);
+        writeState(index, data_fb, data_motor);
     }
 }

@@ -24,21 +24,3 @@ void RSMotorControl::setMixedControlInRad(double pos, double vel, double tau, do
 
     rs_mit_ctrl(can_tx, id, cmd.pos, cmd.vel, cmd.kp, cmd.kd, cmd.tau);
 }
-
-// MotorState RSMotorControl::decode()
-// {
-//     rs_motor_fb_t      data;
-//     rs_data_read_write data_motor;
-//
-//     rs_decode(can_rx, data, data_motor);
-//
-//     MotorState state;
-//
-//     state.pos = data_motor.pos;
-//     state.vel = data_motor.vel;
-//     state.tau = data_motor.tau;
-//
-//     state.last_rx_time = std::chrono::steady_clock::now();
-//
-//     return state;
-// }

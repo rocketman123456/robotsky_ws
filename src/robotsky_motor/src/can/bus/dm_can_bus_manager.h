@@ -13,5 +13,5 @@ public:
     virtual void step();
 
 private:
-    void writeState(const dm_motor_fb_t& data_fb);
+    void writeState(uint16_t index, const dm_motor_fb_t& data_fb);
 };

@@ -20,20 +20,3 @@ void CyberMotorControl::setMixedControlInRad(double pos, double vel, double tau,
 
     cyber_mixed_control(id, cmd.pos, cmd.vel, cmd.kp, cmd.kd, cmd.tau, can_tx);
 }
-
-// MotorState RSMotorControl::decode()
-// {
-//     dm_motor_fb_t data;
-//
-//     dm_decode(can_rx, data);
-//
-//     MotorState state;
-//
-//     state.pos = data.pos;
-//     state.vel = data.vel;
-//     state.tau = data.tau;
-//
-//     state.last_rx_time = std::chrono::steady_clock::now();
-//
-//     return state;
-// }

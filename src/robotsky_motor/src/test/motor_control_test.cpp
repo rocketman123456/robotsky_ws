@@ -45,13 +45,13 @@ std::vector<MotorInitInfo> prepare_motor()
     std::vector<MotorInitInfo> motor_infos;
 
     motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 0, 0x01, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 0, 0x04, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::DM, MotorMode::VELOCITY, 0, 0x04, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
     motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 0, 0x05, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 0, 0x08, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::DM, MotorMode::VELOCITY, 0, 0x08, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
 
-    motor_infos.push_back({MotorType::DM, MotorMode::VELOCITY, 1, 0x09, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 1, 0x09, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
     motor_infos.push_back({MotorType::DM, MotorMode::VELOCITY, 1, 0x0c, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::DM, MotorMode::VELOCITY, 1, 0x0d, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 1, 0x0d, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
     motor_infos.push_back({MotorType::DM, MotorMode::VELOCITY, 1, 0x10, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
 
     motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 2, 0x02, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
@@ -90,46 +90,26 @@ int main(int argc, char** argv)
     joint_rviz_state.effort.resize(motor_count);
     joint_rviz_state.name.resize(motor_count);
 
-    // joint_rviz_state.name = {
-    //     "RB_Roll_Joint",
-    //     "RB_Wheel_Joint",
-    //     "RF_Roll_Joint",
-    //     "RF_Wheel_Joint",
-    //     "LB_Roll_Joint",
-    //     "LB_Wheel_Joint",
-    //     "LF_Roll_Joint",
-    //     "LF_Wheel_Joint",
-
-    //     "RB_Hip_Joint",
-    //     "RB_Knee_Joint",
-    //     "RF_Hip_Joint",
-    //     "RF_Knee_Joint",
-    //     "LB_Hip_Joint",
-    //     "LB_Knee_Joint",
-    //     "LF_Hip_Joint",
-    //     "LF_Knee_Joint",
-    // };
-
     joint_rviz_state.name = {
-        "RB_Roll_Joint",
-        "RB_Hip_Joint",
-        "RB_Knee_Joint",
-        "RB_Wheel_Joint",
-
         "RF_Roll_Joint",
         "RF_Hip_Joint",
         "RF_Knee_Joint",
         "RF_Wheel_Joint",
+
+        "LF_Roll_Joint",
+        "LF_Hip_Joint",
+        "LF_Knee_Joint",
+        "LF_Wheel_Joint",
+
+        "RB_Roll_Joint",
+        "RB_Hip_Joint",
+        "RB_Knee_Joint",
+        "RB_Wheel_Joint",
         
         "LB_Roll_Joint",
         "LB_Hip_Joint",
         "LB_Knee_Joint",
         "LB_Wheel_Joint",
-        
-        "LF_Roll_Joint",
-        "LF_Hip_Joint",
-        "LF_Knee_Joint",
-        "LF_Wheel_Joint",
     };
 
     std::vector<CanInitInfo>    can_infos     = prepare_can();
@@ -214,11 +194,13 @@ int main(int argc, char** argv)
     };
     // clang-format on
 
-    for (int i = 0; i < 10; ++i)
-    {
-        data->can_buses[0]->enable(); // DM
-        data->can_buses[1]->enable(); // RS
-    }
+    // for (int i = 0; i < 10; ++i)
+    // {
+    //     data->can_buses[0]->enable(); // DM
+    //     data->can_buses[1]->enable(); // RS
+    // }
+    data->can_buses[0]->enable(); // DM
+    // data->can_buses[1]->enable(); // RS
     // for (auto can_bus : data->can_buses)
     // {
     //     can_bus->enable();
@@ -244,8 +226,8 @@ int main(int argc, char** argv)
             // robot update motor state
             // send robot joint state msg
 
-            data->can_buses[0]->step(); // DM
-            data->can_buses[1]->step(); // RS
+            // data->can_buses[0]->step(); // DM
+            // data->can_buses[1]->step(); // RS
             // for (auto can_bus : data->can_buses)
             // {
             //     can_bus->step();
@@ -262,6 +244,9 @@ int main(int argc, char** argv)
                 joint_rviz_state.velocity[i] = data->motor_states[i]->vel;
                 joint_rviz_state.effort[i]   = data->motor_states[i]->tau;
             }
+            // uint16_t id = 5;
+            // spdlog::info("motor {} - {} : pos {}", id, joint_rviz_state.name[id - 1], data->motor_states[id - 1]->pos);
+            // joint_rviz_state.position[0] = 1.0;
             joint_rviz_pub->publish(joint_rviz_state);
 
             rclcpp::spin_some(robot);
@@ -278,17 +263,17 @@ int main(int argc, char** argv)
         spdlog::warn("runtime error!");
     }
 
-    data->can_buses[0]->step(); // DM
-    data->can_buses[1]->step(); // RS
+    data->can_buses[0]->disable(); // DM
+    // data->can_buses[1]->disable(); // RS
     // for (auto can_bus : data->can_buses)
     // {
     //     can_bus->disable();
     // }
 
-    for (auto can : data->can_interfaces)
-    {
-        can->finalize();
-    }
+    // for (auto can : data->can_interfaces)
+    // {
+    //     can->finalize();
+    // }
 
     rclcpp::shutdown();
 

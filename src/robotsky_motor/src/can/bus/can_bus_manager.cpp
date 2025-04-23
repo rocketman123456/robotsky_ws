@@ -33,6 +33,20 @@ void CANBusManager::initialize(const CanBusInitInfo& info)
             {
                 spdlog::warn("motor type mismatch");
             }
+
+            bool find = false;
+            for (auto can_index : can_indices)
+            {
+                assert(can_index >= 0 && can_index < data->can_interfaces.size() && "can index out of range");
+                if (data->motors[index]->can_index == can_index)
+                {
+                    find = true;
+                }
+            }
+            if(!find)
+            {
+                spdlog::warn("motor can index mismatch");
+            }
         }
     }
 }
@@ -71,38 +85,7 @@ void updateState(std::shared_ptr<MotorState> state)
 
 void CANBusManager::step()
 {
-    // std::cout << "Tick at " << duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count() << " ms\n";
-
-    // 1. 处理待发送命令队列
-    // std::vector<uint8_t> frame;
-    // {
-    //     std::unique_lock<std::mutex> lock(send_mutex);
-    //     if (send_queue.empty())
-    //     {
-    //         // 等待新命令或超时检查接收
-    //         send_cv.wait_for(lock, std::chrono::milliseconds(10));
-    //     }
-    //     if (!send_queue.empty())
-    //     {
-    //         frame = send_queue.front();
-    //         send_queue.pop();
-    //     }
-    // }
-    // if (!frame.empty())
-    // {
-    //     can_interface.sendFrame(frame);
-    // }
-    // 2. 读取CAN总线上的数据帧
-    // std::vector<uint8_t> receivedFrame;
-    // if (can_interface.readFrame(receivedFrame))
-    // {
-    //     // 根据CAN帧内容解析，并更新对应电机状态
-    //     // 例如，遍历 motors_ 更新状态（此处可能需要进一步映射ID与电机）
-    //     for (auto& motor : motors)
-    //     {
-    //         // motor->updateState(receivedFrame); // 具体解析逻辑由各电机实现
-    //     }
-    // }
+    // TODO
 }
 
 void CANBusManager::run()

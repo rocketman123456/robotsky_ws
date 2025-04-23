@@ -15,7 +15,7 @@ DMCANBusManager::DMCANBusManager()
 
 // I use special master id for each motor: mst_id = id + 0x40, so i can decode it from can id
 
-void DMCANBusManager::writeState(const dm_motor_fb_t& data_fb)
+void DMCANBusManager::writeState(uint16_t index, const dm_motor_fb_t& data_fb)
 {
     uint16_t id = data_fb.mst_id - 1 - 0x40;
 
@@ -24,8 +24,30 @@ void DMCANBusManager::writeState(const dm_motor_fb_t& data_fb)
     if (id >= 0 && id < data->motor_states.size())
     {
         // TODO : lock
-        data->motor_states[id]->pos = data_fb.pos;
-        data->motor_states[id]->vel = data_fb.vel;
+        // data->motor_states[id]->pos = data_fb.pos;
+        // data->motor_states[id]->vel = data_fb.vel;
+
+        spdlog::info("pre-motor {} - pos : {}, vel : {}", 
+            id + 1,
+            data_fb.pos,
+            data_fb.vel
+        );
+
+        data->motors[id]->state.pos = data_fb.pos;
+        data->motors[id]->state.vel = data_fb.vel;
+        data->motors[id]->state.tau = data_fb.tau;
+
+        data->motors[id]->update();
+
+        data->motor_states[id]->pos = data->motors[id]->state.pos;
+        data->motor_states[id]->vel = data->motors[id]->state.pos;
+        data->motor_states[id]->tau = data->motors[id]->state.pos;
+
+        spdlog::info("motor {} - pos : {}, vel : {}", 
+            id + 1,
+            data->motor_states[id]->pos,
+            data->motor_states[id]->vel
+        );
     }
     else
     {
@@ -54,7 +76,7 @@ void DMCANBusManager::enable()
 
         dm_decode(motor->can_rx, data_fb);
 
-        writeState(data_fb);
+        writeState(index, data_fb);
     }
 }
 
@@ -79,7 +101,7 @@ void DMCANBusManager::disable()
 
         dm_decode(motor->can_rx, data_fb);
 
-        writeState(data_fb);
+        writeState(index, data_fb);
     }
 
     spdlog::info("DMCANBusManager disable finish");
@@ -94,6 +116,7 @@ void DMCANBusManager::step()
     {
         auto motor = data->motors[index];
         auto can   = data->can_interfaces[motor->can_index];
+        auto cmd   = data->motor_cmds[index];
 
         motor->setMixedControlInRad(0.0, 0.0, 0.0, 0.0, 1.0);
 
@@ -104,6 +127,6 @@ void DMCANBusManager::step()
 
         dm_decode(motor->can_rx, data_fb);
 
-        writeState(data_fb);
+        writeState(index, data_fb);
     }
 }

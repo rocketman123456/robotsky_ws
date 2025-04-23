@@ -23,7 +23,7 @@ void MotorControl::initialize(const MotorInitInfo& info)
 
 void MotorControl::forwardDataComputeDeg(double pos, double vel, double tau, double kp, double kd)
 {
-    std::lock_guard<std::mutex> lock(cmd.mutex);
+    // std::lock_guard<std::mutex> lock(cmd.mutex);
 
     if (tau > torque_upper_limit)
         tau = torque_upper_limit;
@@ -32,7 +32,6 @@ void MotorControl::forwardDataComputeDeg(double pos, double vel, double tau, dou
 
     // add position delta
     cmd.pos = direction * ((pos * M_PI / 180.0 - delta) * pos_scalar) + offset * pos_scalar;
-    // data.pos_des = pos * direction * pos_scalar * M_PI / 180.0;
     cmd.vel = vel * direction * vel_scalar * M_PI / 180.0;
     cmd.tau = tau * direction * tau_scalar;
     cmd.kp  = kp;
@@ -43,7 +42,7 @@ void MotorControl::forwardDataComputeDeg(double pos, double vel, double tau, dou
 
 void MotorControl::forwardDataComputeRad(double pos, double vel, double tau, double kp, double kd)
 {
-    std::lock_guard<std::mutex> lock(cmd.mutex);
+    // std::lock_guard<std::mutex> lock(cmd.mutex);
 
     if (tau > torque_upper_limit)
         tau = torque_upper_limit;
@@ -62,7 +61,7 @@ void MotorControl::forwardDataComputeRad(double pos, double vel, double tau, dou
 void MotorControl::update()
 {
     // handle data
-    std::lock_guard<std::mutex> lock(state.mutex);
+    // std::lock_guard<std::mutex> lock(state.mutex);
 
     state.pos += delta;
     state.pos *= direction;

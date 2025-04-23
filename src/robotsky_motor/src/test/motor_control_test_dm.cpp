@@ -101,7 +101,7 @@ int main(int argc, char** argv)
                 //     spdlog::info("motor {} pos : {}", data.id, data.pos);
 
                 // spdlog::info("motor {} - pos : {}, vel : {}, tau : {}", can_ids[i], pos_fb[can_ids[i] - 1], vel_fb[can_ids[i] - 1], tau_fb[can_ids[i] - 1]);
-                spdlog::info("motor {} - pos : {}, vel : {}, tau : {}", data.id, data.pos, data.vel, 0.0);
+                spdlog::info("motor {} - {} - pos : {}, vel : {}", data.mst_id - 0x40, data.id, data.pos, data.vel);
 
                 pos_fb[data.id - 1] = data.pos;
                 vel_fb[data.id - 1] = data.vel;

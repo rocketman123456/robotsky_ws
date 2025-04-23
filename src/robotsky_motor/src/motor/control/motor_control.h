@@ -24,8 +24,6 @@ public:
     virtual void setMixedControlInDeg(double pos, double vel, double tau, double kp, double kd) = 0;
     virtual void setMixedControlInRad(double pos, double vel, double tau, double kp, double kd) = 0;
 
-    // static virtual MotorState decode() = 0;
-
     virtual void update();
 
     double getPositionRad() const;
