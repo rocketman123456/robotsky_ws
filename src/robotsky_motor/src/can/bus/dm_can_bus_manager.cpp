@@ -13,17 +13,19 @@ DMCANBusManager::DMCANBusManager()
     type = CanType::DM;
 }
 
+// I use special master id for each motor: mst_id = id + 0x40, so i can decode it from can id
+
 void DMCANBusManager::enable()
 {
     spdlog::info("DMCANBusManager enable");
 
     dm_motor_fb_t data_fb;
-    can_frame can_rx;
+    can_frame     can_rx;
 
-    for(auto index : motor_indices)
+    for (auto index : motor_indices)
     {
         auto motor = data->motors[index];
-        auto can = data->can_interfaces[motor->can_index];
+        auto can   = data->can_interfaces[motor->can_index];
 
         motor->enable();
 
@@ -34,16 +36,19 @@ void DMCANBusManager::enable()
 
         dm_decode(motor->can_rx, data_fb);
 
-        spdlog::info("motor {} - pos : {}, vel : {}", data_fb.id, data_fb.pos, data_fb.vel);
+        uint16_t id = data_fb.mst_id - 1 - 0x40;
 
-        if (data_fb.id > 0 && data_fb.id <= data->motor_states.size())
+        spdlog::info("motor {} - pos : {}, vel : {}", id + 1, data_fb.pos, data_fb.vel);
+
+        if (id >= 0 && id < data->motor_states.size())
         {
-            data->motor_states[data_fb.id - 1]->pos = data_fb.pos;
-            data->motor_states[data_fb.id - 1]->vel = data_fb.vel;
+            // TODO : lock
+            data->motor_states[id]->pos = data_fb.pos;
+            data->motor_states[id]->vel = data_fb.vel;
         }
         else
         {
-            spdlog::warn("motor id {} out of range", data_fb.id);
+            spdlog::warn("motor id {} out of range", id + 1);
         }
     }
 }
@@ -53,12 +58,12 @@ void DMCANBusManager::disable()
     spdlog::info("DMCANBusManager disable");
 
     dm_motor_fb_t data_fb;
-    can_frame can_rx;
+    can_frame     can_rx;
 
-    for(auto index : motor_indices)
+    for (auto index : motor_indices)
     {
         auto motor = data->motors[index];
-        auto can = data->can_interfaces[motor->can_index];
+        auto can   = data->can_interfaces[motor->can_index];
 
         motor->disable();
 
@@ -69,16 +74,19 @@ void DMCANBusManager::disable()
 
         dm_decode(motor->can_rx, data_fb);
 
-        spdlog::info("motor {} - pos : {}, vel : {}", data_fb.id, data_fb.pos, data_fb.vel);
+        uint16_t id = data_fb.mst_id - 1 - 0x40;
 
-        if (data_fb.id > 0 && data_fb.id <= data->motor_states.size())
+        spdlog::info("motor {} - pos : {}, vel : {}", id + 1, data_fb.pos, data_fb.vel);
+
+        if (id >= 0 && id < data->motor_states.size())
         {
-            data->motor_states[data_fb.id - 1]->pos = data_fb.pos;
-            data->motor_states[data_fb.id - 1]->vel = data_fb.vel;
+            // TODO : lock
+            data->motor_states[id]->pos = data_fb.pos;
+            data->motor_states[id]->vel = data_fb.vel;
         }
         else
         {
-            spdlog::warn("motor id {} out of range", data_fb.id);
+            spdlog::warn("motor id {} out of range", id + 1);
         }
     }
 
@@ -88,9 +96,9 @@ void DMCANBusManager::disable()
 void DMCANBusManager::step()
 {
     dm_motor_fb_t data_fb;
-    can_frame can_rx;
+    can_frame     can_rx;
 
-    for(auto index : motor_indices)
+    for (auto index : motor_indices)
     {
         // dm_mit_ctrl(can_tx, can_ids[i], pos[i], vel[i], kp[i], kd[i], 0.0f);
         // {
@@ -102,7 +110,7 @@ void DMCANBusManager::step()
         // dm_decode(can_rx, data);
 
         auto motor = data->motors[index];
-        auto can = data->can_interfaces[motor->can_index];
+        auto can   = data->can_interfaces[motor->can_index];
 
         motor->enable();
 
@@ -113,16 +121,19 @@ void DMCANBusManager::step()
 
         dm_decode(motor->can_rx, data_fb);
 
-        spdlog::info("motor {} - pos : {}, vel : {}", data_fb.id, data_fb.pos, data_fb.vel);
+        uint16_t id = data_fb.mst_id - 1 - 0x40;
 
-        if (data_fb.id > 0 && data_fb.id <= data->motor_states.size())
+        // spdlog::info("motor {} - pos : {}, vel : {}", id + 1, data_fb.pos, data_fb.vel);
+
+        if (id >= 0 && id < data->motor_states.size())
         {
-            data->motor_states[data_fb.id - 1]->pos = data_fb.pos;
-            data->motor_states[data_fb.id - 1]->vel = data_fb.vel;
+            // TODO : lock
+            data->motor_states[id]->pos = data_fb.pos;
+            data->motor_states[id]->vel = data_fb.vel;
         }
         else
         {
-            spdlog::warn("motor id {} out of range", data_fb.id);
+            spdlog::warn("motor id {} out of range", id + 1);
         }
     }
 }
