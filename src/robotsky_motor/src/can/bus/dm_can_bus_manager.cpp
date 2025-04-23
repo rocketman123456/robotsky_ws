@@ -24,30 +24,31 @@ void DMCANBusManager::writeState(uint16_t index, const dm_motor_fb_t& data_fb)
     if (id >= 0 && id < data->motor_states.size())
     {
         // TODO : lock
-        // data->motor_states[id]->pos = data_fb.pos;
-        // data->motor_states[id]->vel = data_fb.vel;
 
-        spdlog::info("pre-motor {} - pos : {}, vel : {}", 
-            id + 1,
-            data_fb.pos,
-            data_fb.vel
-        );
+        // spdlog::info("pre-motor {} - pos : {}, vel : {}", 
+        //     id + 1,
+        //     data_fb.pos,
+        //     data_fb.vel
+        // );
 
-        data->motors[id]->state.pos = data_fb.pos;
-        data->motors[id]->state.vel = data_fb.vel;
-        data->motors[id]->state.tau = data_fb.tau;
+        uint16_t index = motor_index_map[id + 1];
 
-        data->motors[id]->update();
+        data->motors[index]->state.pos = data_fb.pos;
+        data->motors[index]->state.vel = data_fb.vel;
+        // data->motors[index]->state.tau = data_fb.tau;
 
-        data->motor_states[id]->pos = data->motors[id]->state.pos;
-        data->motor_states[id]->vel = data->motors[id]->state.pos;
-        data->motor_states[id]->tau = data->motors[id]->state.pos;
+        data->motors[index]->update();
 
-        spdlog::info("motor {} - pos : {}, vel : {}", 
-            id + 1,
-            data->motor_states[id]->pos,
-            data->motor_states[id]->vel
-        );
+        data->motor_states[id]->pos = data->motors[index]->state.pos;
+        data->motor_states[id]->vel = data->motors[index]->state.vel;
+        // data->motor_states[id]->tau = data->motors[index]->state.tau;
+
+        // spdlog::info("motor {} - {} - pos : {}, vel : {}", 
+        //     index,
+        //     id + 1,
+        //     data->motor_states[id]->pos,
+        //     data->motor_states[id]->vel
+        // );
     }
     else
     {

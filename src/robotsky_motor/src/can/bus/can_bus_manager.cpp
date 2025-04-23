@@ -27,7 +27,7 @@ void CANBusManager::initialize(const CanBusInitInfo& info)
             assert(index >= 0 && index < data->motors.size() && "motor index out of range");
             if(data->motors[index]->type == type)
             {
-                //
+                motor_index_map[data->motors[index]->id] = index;
             }
             else
             {
@@ -48,6 +48,10 @@ void CANBusManager::initialize(const CanBusInitInfo& info)
                 spdlog::warn("motor can index mismatch");
             }
         }
+    }
+    else
+    {
+        spdlog::warn("cannot validate can bus config");
     }
 }
 

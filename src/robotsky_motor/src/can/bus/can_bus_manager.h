@@ -48,6 +48,8 @@ public:
     std::vector<uint16_t> can_indices;
     std::vector<uint16_t> motor_indices;
 
+    std::unordered_map<uint16_t, uint16_t> motor_index_map;
+
     using Clock     = std::chrono::high_resolution_clock; // steady_clock
     using Duration  = std::chrono::duration<double>;
     using TimePoint = std::chrono::time_point<Clock, Duration>;

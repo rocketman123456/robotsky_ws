@@ -36,10 +36,10 @@ int main(int argc, char** argv)
 
     // clang-format off
     float pos[] = {
-        0.0-0.6, 1.2-0.0, // RF
-        0.0+0.6, -1.2-0.0, // LF
-        0.0+0.6, -1.2-0.0, // RB
-        0.0-0.6, 1.2-0.0, // LB
+        -0.8, 1.6, // RF
+        0.8, -1.6, // LF
+        0.8, -1.6, // RB
+        -0.8, 1.6, // LB
     };
     float kp[] = {
         30.0, 60.0, // RF
@@ -113,7 +113,7 @@ int main(int argc, char** argv)
                 // if(data.id == can_ids[3])
                 //     spdlog::info("motor {} - pos : {}, vel : {}, tau : {}", data.id, data.pos, data.vel, data.tau);
 
-                spdlog::info("motor {} - pos : {}, vel : {}, tau : {}", data.id, data.pos, data.vel, data.tau);
+                // spdlog::info("motor {} - pos : {}, vel : {}, tau : {}", data.id, data.pos, data.vel, data.tau);
                 // spdlog::info("motor {} - pos : {}, vel : {}, tau : {}", can_ids[i], pos_fb[can_ids[i] - 1], vel_fb[can_ids[i] - 1], tau_fb[can_ids[i] - 1]);
             }
 

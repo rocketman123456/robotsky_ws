@@ -16,17 +16,20 @@ void RSCANBusManager::writeState(uint16_t index, const rs_motor_fb_t& data_fb, c
 {
     if (data_fb.id > 0 && data_fb.id <= data->motor_states.size())
     {
-        data->motors[data_fb.id - 1]->state.pos = data_fb.pos;
-        data->motors[data_fb.id - 1]->state.vel = data_fb.vel;
-        data->motors[data_fb.id - 1]->state.tau = data_fb.tau;
+        uint16_t index = motor_index_map[data_fb.id];
 
-        data->motors[data_fb.id - 1]->update();
+        data->motors[index]->state.pos = data_fb.pos;
+        data->motors[index]->state.vel = data_fb.vel;
+        data->motors[index]->state.tau = data_fb.tau;
 
-        data->motor_states[data_fb.id - 1]->pos = data->motors[data_fb.id - 1]->state.pos;
-        data->motor_states[data_fb.id - 1]->vel = data->motors[data_fb.id - 1]->state.pos;
-        data->motor_states[data_fb.id - 1]->tau = data->motors[data_fb.id - 1]->state.pos;
+        data->motors[index]->update();
+
+        data->motor_states[data_fb.id - 1]->pos = data->motors[index]->state.pos;
+        data->motor_states[data_fb.id - 1]->vel = data->motors[index]->state.vel;
+        data->motor_states[data_fb.id - 1]->tau = data->motors[index]->state.tau;
     
-        spdlog::info("motor {} - pos : {}, vel : {}", 
+        spdlog::info("motor {} - {} - pos : {}, vel : {}", 
+            index,
             data_fb.id,
             data->motor_states[data_fb.id - 1]->pos,
             data->motor_states[data_fb.id - 1]->vel

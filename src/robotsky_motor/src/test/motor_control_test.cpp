@@ -226,7 +226,7 @@ int main(int argc, char** argv)
             // robot update motor state
             // send robot joint state msg
 
-            // data->can_buses[0]->step(); // DM
+            data->can_buses[0]->step(); // DM
             // data->can_buses[1]->step(); // RS
             // for (auto can_bus : data->can_buses)
             // {
