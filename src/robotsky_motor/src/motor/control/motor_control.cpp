@@ -63,7 +63,7 @@ void MotorControl::update()
     // handle data
     // std::lock_guard<std::mutex> lock(state.mutex);
 
-    spdlog::info("Motor update: {}, {}, {}", can_index, id, direction);
+    // spdlog::info("Motor update: {}, {}, {}", can_index, id, direction);
 
     state.pos += delta;
     state.pos *= direction;

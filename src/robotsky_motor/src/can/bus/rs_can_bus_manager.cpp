@@ -1,5 +1,6 @@
 #include "can/bus/rs_can_bus_manager.h"
 #include "robot/robot_data.h"
+#include "motor/control/rs_motor_control.h"
 
 #include <spdlog/spdlog.h>
 
@@ -28,12 +29,12 @@ void RSCANBusManager::writeState(uint16_t index, const rs_motor_fb_t& data_fb, c
         data->motor_states[data_fb.id - 1]->vel = data->motors[index]->state.vel;
         data->motor_states[data_fb.id - 1]->tau = data->motors[index]->state.tau;
     
-        spdlog::info("motor {} - {} - pos : {}, vel : {}", 
-            index,
-            data_fb.id,
-            data->motor_states[data_fb.id - 1]->pos,
-            data->motor_states[data_fb.id - 1]->vel
-        );
+        // spdlog::info("motor {} - {} - pos : {}, vel : {}", 
+        //     index,
+        //     data_fb.id,
+        //     data->motor_states[data_fb.id - 1]->pos,
+        //     data->motor_states[data_fb.id - 1]->vel
+        // );
     }
     else
     {
@@ -48,7 +49,25 @@ void RSCANBusManager::enable()
     rs_motor_fb_t      data_fb;
     rs_data_read_write data_motor;
 
-    can_frame can_rx;
+    for(auto index : motor_indices)
+    {
+        auto motor = data->motors[index];
+        auto can = data->can_interfaces[motor->can_index];
+
+        auto* pointer = motor.get();
+        reinterpret_cast<RSMotorControl*>(pointer)->setMITMode();
+
+        can->send(motor->can_tx);
+        usleep(50);
+        can->receive(motor->can_rx);
+        usleep(50);
+
+        rs_decode(motor->can_tx, data_fb, data_motor);
+
+        // spdlog::info("motor {} - pos : {}, vel : {}", data_fb.id, data_fb.pos, data_fb.vel);
+
+        writeState(index, data_fb, data_motor);
+    }
 
     for(auto index : motor_indices)
     {
@@ -62,7 +81,7 @@ void RSCANBusManager::enable()
         can->receive(motor->can_rx);
         usleep(50);
 
-        rs_decode(can_rx, data_fb, data_motor);
+        rs_decode(motor->can_tx, data_fb, data_motor);
 
         // spdlog::info("motor {} - pos : {}, vel : {}", data_fb.id, data_fb.pos, data_fb.vel);
 
@@ -93,7 +112,7 @@ void RSCANBusManager::disable()
         can->receive(motor->can_rx);
         usleep(50);
 
-        rs_decode(can_rx, data_fb, data_motor);
+        rs_decode(motor->can_tx, data_fb, data_motor);
 
         // spdlog::info("motor {} - pos : {}, vel : {}", data_fb.id, data_fb.pos, data_fb.vel);
 
@@ -114,16 +133,23 @@ void RSCANBusManager::step()
     {
         auto motor = data->motors[index];
         auto can = data->can_interfaces[motor->can_index];
-        auto cmd   = data->motor_cmds[index];
+        // auto m_id  = motor_index_map[motor->id];
+        auto cmd   = data->motor_cmds[motor->id - 1];
 
-        motor->setMixedControlInRad(0.0, 0.0, 0.0, 0.0, 1.0);
+        motor->setMixedControlInRad(
+            cmd->pos, 
+            cmd->vel,
+            cmd->tau,
+            cmd->kp,
+            cmd->kd
+        );
 
         can->send(motor->can_tx);
         usleep(50);
         can->receive(motor->can_rx);
         // usleep(50);
 
-        rs_decode(can_rx, data_fb, data_motor);
+        rs_decode(motor->can_rx, data_fb, data_motor);
 
         // spdlog::info("{} motor {} - pos : {}, vel : {}", index, data_fb.id, data_fb.pos, data_fb.vel);
 

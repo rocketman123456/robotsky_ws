@@ -52,7 +52,7 @@ void DMCANBusManager::writeState(uint16_t index, const dm_motor_fb_t& data_fb)
     }
     else
     {
-        spdlog::warn("DMCANBusManager motor id {} out of range", id + 1);
+        // spdlog::warn("DMCANBusManager motor id {} out of range", id + 1);
     }
 }
 
@@ -117,9 +117,16 @@ void DMCANBusManager::step()
     {
         auto motor = data->motors[index];
         auto can   = data->can_interfaces[motor->can_index];
-        auto cmd   = data->motor_cmds[index];
+        // auto m_id  = motor_index_map[motor->id];
+        auto cmd   = data->motor_cmds[motor->id - 1];
 
-        motor->setMixedControlInRad(0.0, 0.0, 0.0, 0.0, 1.0);
+        motor->setMixedControlInRad(
+            cmd->pos, 
+            cmd->vel,
+            cmd->tau,
+            cmd->kp,
+            cmd->kd
+        );
 
         can->send(motor->can_tx);
         usleep(50);

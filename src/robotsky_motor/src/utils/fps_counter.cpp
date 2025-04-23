@@ -4,11 +4,11 @@
 
 #include <numeric>
 
-FPSCounter::FPSCounter(bool print_info)
+FPSCounter::FPSCounter(bool print_info_)
 {
     _freqs.resize(_num_iterations + 1);
     _index      = 0;
-    _print_info = print_info;
+    print_info = print_info_;
 }
 
 void FPSCounter::start()
@@ -50,7 +50,7 @@ void FPSCounter::update()
         }
         double variance = sq_sum / (_index + 1);
 
-        if (_print_info)
+        if (print_info)
         {
             spdlog::info("Average frequency: {} Hz", mean);
             spdlog::info("Variance: {} (Hz^2)", variance);

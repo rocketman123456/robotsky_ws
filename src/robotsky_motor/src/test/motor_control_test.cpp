@@ -20,6 +20,7 @@
 #include <memory>
 #include <thread>
 
+using namespace std::chrono_literals;
 using Clock     = std::chrono::high_resolution_clock;
 using TimePoint = Clock::time_point;
 using Duration  = std::chrono::duration<double>;
@@ -54,15 +55,15 @@ std::vector<MotorInitInfo> prepare_motor()
     motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 1, 0x0d, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
     motor_infos.push_back({MotorType::DM, MotorMode::VELOCITY, 1, 0x10, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
 
-    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 2, 0x02, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 2, 0x03, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 2, 0x06, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 2, 0x07, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 2, 0x02, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 2, 0x03, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 2, 0x06, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 2, 0x07, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
 
-    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 3, 0x0a, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 3, 0x0b, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 3, 0x0e, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 3, 0x0f, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 3, 0x0a, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 3, 0x0b, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 3, 0x0e, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 3, 0x0f, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
 
     return motor_infos;
 }
@@ -192,21 +193,66 @@ int main(int argc, char** argv)
         1.0, 2.0, // RB
         1.0, 2.0, // LB
     };
+
+    float pos[] = {
+        0.0, -0.8,  1.6, 0.0, // RF
+        0.0, -0.8,  1.6, 0.0, // LF
+        0.0,  0.8, -1.6, 0.0, // RB
+        0.0,  0.8, -1.6, 0.0, // LB
+    };
+    float vel[] = {
+        0.0, 0.0, 0.0, 0.0, // RF
+        0.0, 0.0, 0.0, 0.0, // LF
+        0.0, 0.0, 0.0, 0.0, // RB
+        0.0, 0.0, 0.0, 0.0, // LB
+    };
+    float tau[] = {
+        0.0, 0.0, 0.0, 0.0, // RF
+        0.0, 0.0, 0.0, 0.0, // LF
+        0.0, 0.0, 0.0, 0.0, // RB
+        0.0, 0.0, 0.0, 0.0, // LB
+    };
+    float kp[] = {
+        30.0, 30.0, 60.0, 0.0, // RF
+        30.0, 30.0, 60.0, 0.0, // LF
+        30.0, 30.0, 60.0, 0.0, // RB
+        30.0, 30.0, 60.0, 0.0, // LB
+    };
+    float kd[] = {
+        1.0, 1.0, 2.0, 2.0, // RF
+        1.0, 1.0, 2.0, 2.0, // LF
+        1.0, 1.0, 2.0, 2.0, // RB
+        1.0, 1.0, 2.0, 2.0, // LB
+    };
     // clang-format on
+
+    for (int i = 0; i < motor_infos.size(); ++i)
+    {
+        data->motor_cmds[i]->pos = pos[i];
+        data->motor_cmds[i]->vel = vel[i];
+        data->motor_cmds[i]->tau = tau[i];
+        data->motor_cmds[i]->kp  = kp[i];
+        data->motor_cmds[i]->kd  = kd[i];
+    }
 
     // for (int i = 0; i < 10; ++i)
     // {
     //     data->can_buses[0]->enable(); // DM
     //     data->can_buses[1]->enable(); // RS
     // }
-    data->can_buses[0]->enable(); // DM
+    // data->can_buses[0]->enable(); // DM
     // data->can_buses[1]->enable(); // RS
-    // for (auto can_bus : data->can_buses)
-    // {
-    //     can_bus->enable();
-    // }
+    for (auto can_bus : data->can_buses)
+    {
+        can_bus->enable();
+    }
 
-    double frequency_hz = 200; // 500
+    for (auto can_bus : data->can_buses)
+    {
+        can_bus->start();
+    }
+
+    double frequency_hz = 500;
     auto   interval     = Duration(1.0 / frequency_hz);
     auto   next_time    = Clock::now() + interval;
 
@@ -214,19 +260,36 @@ int main(int argc, char** argv)
     auto native_handle = *reinterpret_cast<std::thread::native_handle_type*>(&thread_id);
     set_thread(0, native_handle);
 
-    FPSCounter fps_counter(true);
+    FPSCounter fps_counter;
     fps_counter.start();
+
+    float dt = 0.0;
 
     try
     {
         while (rclcpp::ok())
         {
-            // TODO : task
-            // robot send cmd to motor
-            // robot update motor state
-            // send robot joint state msg
+            dt += 0.002;
 
-            data->can_buses[0]->step(); // DM
+            pos[1] = -0.6 - 0.2 * sin(2 * M_PI * dt); // RF
+            pos[2] =  1.2 + 0.4 * sin(2 * M_PI * dt);
+            pos[5] = -0.6 - 0.2 * sin(2 * M_PI * dt); // LF
+            pos[6] =  1.2 + 0.4 * sin(2 * M_PI * dt);
+            pos[9] =  0.6 + 0.2 * sin(2 * M_PI * dt);  // RB
+            pos[10] = -1.2 - 0.4 * sin(2 * M_PI * dt);
+            pos[13] =  0.6 + 0.2 * sin(2 * M_PI * dt); // LB
+            pos[14] = -1.2 - 0.4 * sin(2 * M_PI * dt);
+
+            for (int i = 0; i < motor_infos.size(); ++i)
+            {
+                data->motor_cmds[i]->pos = pos[i];
+                data->motor_cmds[i]->vel = vel[i];
+                data->motor_cmds[i]->tau = tau[i];
+                data->motor_cmds[i]->kp  = kp[i];
+                data->motor_cmds[i]->kd  = kd[i];
+            }
+
+            // data->can_buses[0]->step(); // DM
             // data->can_buses[1]->step(); // RS
             // for (auto can_bus : data->can_buses)
             // {
@@ -263,17 +326,24 @@ int main(int argc, char** argv)
         spdlog::warn("runtime error!");
     }
 
-    data->can_buses[0]->disable(); // DM
-    // data->can_buses[1]->disable(); // RS
-    // for (auto can_bus : data->can_buses)
-    // {
-    //     can_bus->disable();
-    // }
+    for (auto can_bus : data->can_buses)
+    {
+        can_bus->stop();
+    }
 
-    // for (auto can : data->can_interfaces)
-    // {
-    //     can->finalize();
-    // }
+    // data->can_buses[0]->disable(); // DM
+    // data->can_buses[1]->disable(); // RS
+    for (auto can_bus : data->can_buses)
+    {
+        can_bus->disable();
+    }
+
+    std::this_thread::sleep_for(200ms);
+
+    for (auto can : data->can_interfaces)
+    {
+        can->finalize();
+    }
 
     rclcpp::shutdown();
 

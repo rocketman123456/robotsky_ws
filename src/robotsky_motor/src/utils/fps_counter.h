@@ -26,5 +26,6 @@ private:
 
     TimePoint _prev;
 
-    bool _print_info = false;
+public:
+    bool print_info = false;
 };

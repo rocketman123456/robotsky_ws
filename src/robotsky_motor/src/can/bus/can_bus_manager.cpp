@@ -96,6 +96,8 @@ void CANBusManager::run()
 {
     set_thread(cpu_core, worker_thread.native_handle());
 
+    counter.print_info = true;
+
     counter.start();
 
     while (running.load())

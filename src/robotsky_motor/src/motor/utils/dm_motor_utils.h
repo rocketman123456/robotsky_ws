@@ -30,21 +30,21 @@ constexpr float DM_T_MAX  = 10.0f;
 // 电机回传信息结构体
 struct dm_motor_fb_t
 {
-    int   mst_id;
-    int   id;
-    int   state;
-    int   p_int;
-    int   v_int;
-    int   t_int;
-    int   kp_int;
-    int   kd_int;
-    float pos;
-    float vel;
-    float tau;
-    float kp;
-    float kd;
-    float t_mos;
-    float t_coil;
+    int   mst_id = 0;
+    int   id = 0;
+    int   state = 0;
+    int   p_int = 0;
+    int   v_int = 0;
+    int   t_int = 0;
+    int   kp_int = 0;
+    int   kd_int = 0;
+    float pos = 0;
+    float vel = 0;
+    float tau = 0;
+    float kp = 0;
+    float kd = 0;
+    float t_mos = 0;
+    float t_coil = 0;
 };
 
 // 电机参数设置结构体

@@ -73,6 +73,8 @@ public:
 class rs_data_read_write
 {
 public:
+    rs_data_read_write(const uint16_t* index_list = RS_Index_List);
+    
     rs_data_read_write_one run_mode;      // 0:运控模式 1:位置模式 2:速度模式 3:电流模式 4:零点模式 uint8  1byte
     rs_data_read_write_one iq_ref;        // 电流模式Iq指令  float 	4byte 	-23~23A
     rs_data_read_write_one spd_ref;       // 转速模式转速指令  float 	4byte 	-30~30rad/s
@@ -89,18 +91,16 @@ public:
     rs_data_read_write_one mech_vel; // 负载端转速  float 	4byte 	-30~30rad/s
     rs_data_read_write_one vbus;     // 母线电压  float 	4byte 	V
     rs_data_read_write_one rotation; // 圈数  int16 	2byte   圈数
-
-    rs_data_read_write(const uint16_t* index_list = RS_Index_List);
 };
 
 struct rs_motor_fb_t
 {
-    uint16_t id;
-    int16_t  pattern; // 电机模式（0复位1标定2运行）
-    float    pos;
-    float    vel;
-    float    tau;
-    float    temp;
+    uint16_t id = 0;
+    int16_t  pattern = 0; // 电机模式（0复位1标定2运行）
+    float    pos = 0.0f;
+    float    vel = 0.0f;
+    float    tau = 0.0f;
+    float    temp = 0.0f;
 };
 
 float rs_uint16_to_float(uint16_t x, float x_min, float x_max, int bits);

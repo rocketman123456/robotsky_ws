@@ -11,6 +11,11 @@ void RSMotorControl::enable()
 
 void RSMotorControl::disable() { rs_disable_motor_mode(can_tx, id, 0); }
 
+void RSMotorControl::setMITMode()
+{
+    rs_set_motor_parameter(can_tx, id, 0X7005, RS_Move_Control_mode, RS_Set_mode);
+}
+
 void RSMotorControl::setMixedControlInDeg(double pos, double vel, double tau, double kp, double kd)
 {
     forwardDataComputeDeg(pos, vel, tau, kp, kd);
