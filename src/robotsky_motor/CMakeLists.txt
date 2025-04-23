@@ -10,6 +10,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 
 find_package(robotsky_interface REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
 find_package(spdlog REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -46,6 +48,8 @@ target_link_libraries(robotsky_motor_lib
 ament_target_dependencies(robotsky_motor_lib
   rclcpp
   robotsky_interface
+  std_msgs
+  sensor_msgs
 )
 
 add_executable(robot_node

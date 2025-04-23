@@ -13,6 +13,10 @@
   <test_depend>ament_lint_common</test_depend>
 
   <depend>robotsky_interface</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

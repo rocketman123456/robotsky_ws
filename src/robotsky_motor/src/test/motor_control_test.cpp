@@ -8,6 +8,12 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <std_msgs/msg/string.hpp>
+#include <std_msgs/msg/float32_multi_array.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
+// #include <geometry_msgs/msg/transform_stamped.hpp>
+// #include <tf2_ros/transform_broadcaster.h>
+
 #include <spdlog/spdlog.h>
 
 #include <chrono>
@@ -17,6 +23,10 @@
 using Clock     = std::chrono::high_resolution_clock;
 using TimePoint = Clock::time_point;
 using Duration  = std::chrono::duration<double>;
+
+sensor_msgs::msg::JointState joint_rviz_state;
+
+const uint16_t motor_count = 16;
 
 std::vector<CanInitInfo> prepare_can()
 {
@@ -35,7 +45,7 @@ std::vector<MotorInitInfo> prepare_motor()
     std::vector<MotorInitInfo> motor_infos;
 
     motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 0, 0x01, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 0, 0x02, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
+    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 0, 0x04, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
     motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 0, 0x05, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
     motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 0, 0x08, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
 
@@ -61,18 +71,8 @@ std::vector<CanBusInitInfo> prepare_can_bus()
 {
     std::vector<CanBusInitInfo> can_bus_infos;
 
-    can_bus_infos.push_back({
-        CanType::DM,
-        1, // cpu core
-        {0, 1},
-        {0, 1, 2, 3, 4, 5, 6, 7},
-    });
-    can_bus_infos.push_back({
-        CanType::RS,
-        2, // cpu core
-        {2, 3},
-        {8, 9, 10, 11, 12, 13, 14, 15},
-    });
+    can_bus_infos.push_back({CanType::DM, 1, {0, 1}, {0, 1, 2, 3, 4, 5, 6, 7}});
+    can_bus_infos.push_back({CanType::RS, 2, {2, 3}, {8, 9, 10, 11, 12, 13, 14, 15}});
 
     return can_bus_infos;
 }
@@ -82,6 +82,55 @@ int main(int argc, char** argv)
     rclcpp::init(argc, argv);
 
     auto robot = std::make_shared<Robot>();
+
+    auto joint_rviz_pub  = robot->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
+
+    joint_rviz_state.position.resize(motor_count);
+    joint_rviz_state.velocity.resize(motor_count);
+    joint_rviz_state.effort.resize(motor_count);
+    joint_rviz_state.name.resize(motor_count);
+
+    // joint_rviz_state.name = {
+    //     "RB_Roll_Joint",
+    //     "RB_Wheel_Joint",
+    //     "RF_Roll_Joint",
+    //     "RF_Wheel_Joint",
+    //     "LB_Roll_Joint",
+    //     "LB_Wheel_Joint",
+    //     "LF_Roll_Joint",
+    //     "LF_Wheel_Joint",
+
+    //     "RB_Hip_Joint",
+    //     "RB_Knee_Joint",
+    //     "RF_Hip_Joint",
+    //     "RF_Knee_Joint",
+    //     "LB_Hip_Joint",
+    //     "LB_Knee_Joint",
+    //     "LF_Hip_Joint",
+    //     "LF_Knee_Joint",
+    // };
+
+    joint_rviz_state.name = {
+        "RB_Roll_Joint",
+        "RB_Hip_Joint",
+        "RB_Knee_Joint",
+        "RB_Wheel_Joint",
+
+        "RF_Roll_Joint",
+        "RF_Hip_Joint",
+        "RF_Knee_Joint",
+        "RF_Wheel_Joint",
+        
+        "LB_Roll_Joint",
+        "LB_Hip_Joint",
+        "LB_Knee_Joint",
+        "LB_Wheel_Joint",
+        
+        "LF_Roll_Joint",
+        "LF_Hip_Joint",
+        "LF_Knee_Joint",
+        "LF_Wheel_Joint",
+    };
 
     std::vector<CanInitInfo>    can_infos     = prepare_can();
     std::vector<MotorInitInfo>  motor_infos   = prepare_motor();
@@ -165,8 +214,15 @@ int main(int argc, char** argv)
     };
     // clang-format on
 
-    data->can_buses[0]->enable(); // DM
-    // data->can_buses[1]->enable(); // RS
+    for (int i = 0; i < 10; ++i)
+    {
+        data->can_buses[0]->enable(); // DM
+        data->can_buses[1]->enable(); // RS
+    }
+    // for (auto can_bus : data->can_buses)
+    // {
+    //     can_bus->enable();
+    // }
 
     double frequency_hz = 200; // 500
     auto   interval     = Duration(1.0 / frequency_hz);
@@ -189,7 +245,24 @@ int main(int argc, char** argv)
             // send robot joint state msg
 
             data->can_buses[0]->step(); // DM
-            // data->can_buses[1]->step(); // RS
+            data->can_buses[1]->step(); // RS
+            // for (auto can_bus : data->can_buses)
+            // {
+            //     can_bus->step();
+            // }
+
+            joint_rviz_state.header.stamp = robot->now();
+            for (int i = 0; i < motor_count; ++i)
+            {
+                // joint_rviz_state.position[i] = data->motor_states[data->motors[i]->id - 1]->pos;
+                // joint_rviz_state.velocity[i] = data->motor_states[data->motors[i]->id - 1]->vel;
+                // joint_rviz_state.effort[i]   = data->motor_states[data->motors[i]->id - 1]->tau;
+
+                joint_rviz_state.position[i] = data->motor_states[i]->pos;
+                joint_rviz_state.velocity[i] = data->motor_states[i]->vel;
+                joint_rviz_state.effort[i]   = data->motor_states[i]->tau;
+            }
+            joint_rviz_pub->publish(joint_rviz_state);
 
             rclcpp::spin_some(robot);
 
@@ -205,10 +278,12 @@ int main(int argc, char** argv)
         spdlog::warn("runtime error!");
     }
 
-    for (int i = 0; i < can_bus_infos.size(); ++i)
-    {
-        data->can_buses[i]->disable();
-    }
+    data->can_buses[0]->step(); // DM
+    data->can_buses[1]->step(); // RS
+    // for (auto can_bus : data->can_buses)
+    // {
+    //     can_bus->disable();
+    // }
 
     for (auto can : data->can_interfaces)
     {
