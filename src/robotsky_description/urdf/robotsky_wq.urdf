@@ -12,7 +12,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/base_link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/base_link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.796078431372549 0.823529411764706 0.937254901960784 1" />
@@ -21,7 +21,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/base_link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/base_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -34,7 +34,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/RF_Roll_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/RF_Roll_Link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
@@ -43,7 +43,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/RF_Roll_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/RF_Roll_Link.STL" />
       </geometry>
     </collision>
   </link>
@@ -63,7 +63,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/RF_Hip_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/RF_Hip_Link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.796078431372549 0.823529411764706 0.937254901960784 1" />
@@ -72,7 +72,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/RF_Hip_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/RF_Hip_Link.STL" />
       </geometry>
     </collision>
   </link>
@@ -92,7 +92,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/RF_Knee_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/RF_Knee_Link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.796078431372549 0.823529411764706 0.937254901960784 1" />
@@ -101,7 +101,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/RF_Knee_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/RF_Knee_Link.STL" />
       </geometry>
     </collision>
   </link>
@@ -121,7 +121,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/RF_Wheel_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/RF_Wheel_Link.STL" />
       </geometry>
       <material name="">
         <color rgba="1 1 1 1" />
@@ -140,13 +140,13 @@
       <origin xyz="0 -0.042 0" rpy="1.57 0 0" />
       <geometry>
         <cylinder radius="0.075" length="0.035"/>
-        <!-- <mesh filename="package://srobot_description/meshes/robotsky_wq/RF_Wheel_Link.STL" /> -->
+        <!-- <mesh filename="package://robotsky_description/meshes/robotsky_wq/RF_Wheel_Link.STL" /> -->
       </geometry>
     </collision>
     <!-- <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/RF_Wheel_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/RF_Wheel_Link.STL" />
       </geometry>
     </collision> -->
   </link>
@@ -166,7 +166,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/LF_Roll_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/LF_Roll_Link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
@@ -175,7 +175,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/LF_Roll_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/LF_Roll_Link.STL" />
       </geometry>
     </collision>
   </link>
@@ -195,7 +195,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/LF_Hip_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/LF_Hip_Link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.796078431372549 0.823529411764706 0.937254901960784 1" />
@@ -204,7 +204,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/LF_Hip_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/LF_Hip_Link.STL" />
       </geometry>
     </collision>
   </link>
@@ -224,7 +224,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/LF_Knee_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/LF_Knee_Link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.796078431372549 0.823529411764706 0.937254901960784 1" />
@@ -233,7 +233,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/LF_Knee_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/LF_Knee_Link.STL" />
       </geometry>
     </collision>
   </link>
@@ -253,7 +253,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/LF_Wheel_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/LF_Wheel_Link.STL" />
       </geometry>
       <material name="">
         <color rgba="1 1 1 1" />
@@ -272,13 +272,13 @@
       <origin xyz="0 0.042 0" rpy="1.57 0 0" />
       <geometry>
         <cylinder radius="0.075" length="0.035"/>
-        <!-- <mesh filename="package://srobot_description/meshes/robotsky_wq/RF_Wheel_Link.STL" /> -->
+        <!-- <mesh filename="package://robotsky_description/meshes/robotsky_wq/RF_Wheel_Link.STL" /> -->
       </geometry>
     </collision>
     <!-- <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/LF_Wheel_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/LF_Wheel_Link.STL" />
       </geometry>
     </collision> -->
   </link>
@@ -298,7 +298,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/RB_Roll_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/RB_Roll_Link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
@@ -307,7 +307,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/RB_Roll_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/RB_Roll_Link.STL" />
       </geometry>
     </collision>
   </link>
@@ -327,7 +327,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/RB_Hip_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/RB_Hip_Link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.796078431372549 0.823529411764706 0.937254901960784 1" />
@@ -336,7 +336,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/RB_Hip_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/RB_Hip_Link.STL" />
       </geometry>
     </collision>
   </link>
@@ -356,7 +356,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/RB_Knee_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/RB_Knee_Link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.796078431372549 0.823529411764706 0.937254901960784 1" />
@@ -365,7 +365,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/RB_Knee_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/RB_Knee_Link.STL" />
       </geometry>
     </collision>
   </link>
@@ -385,7 +385,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/RB_Wheel_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/RB_Wheel_Link.STL" />
       </geometry>
       <material name="">
         <color rgba="1 1 1 1" />
@@ -404,13 +404,13 @@
       <origin xyz="0 -0.042 0" rpy="1.57 0 0" />
       <geometry>
         <cylinder radius="0.075" length="0.035"/>
-        <!-- <mesh filename="package://srobot_description/meshes/robotsky_wq/RF_Wheel_Link.STL" /> -->
+        <!-- <mesh filename="package://robotsky_description/meshes/robotsky_wq/RF_Wheel_Link.STL" /> -->
       </geometry>
     </collision>
     <!-- <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/RB_Wheel_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/RB_Wheel_Link.STL" />
       </geometry>
     </collision> -->
   </link>
@@ -430,7 +430,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/LB_Roll_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/LB_Roll_Link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
@@ -439,7 +439,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/LB_Roll_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/LB_Roll_Link.STL" />
       </geometry>
     </collision>
   </link>
@@ -459,7 +459,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/LB_Hip_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/LB_Hip_Link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.796078431372549 0.823529411764706 0.937254901960784 1" />
@@ -468,7 +468,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/LB_Hip_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/LB_Hip_Link.STL" />
       </geometry>
     </collision>
   </link>
@@ -488,7 +488,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/LB_Knee_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/LB_Knee_Link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.796078431372549 0.823529411764706 0.937254901960784 1" />
@@ -497,7 +497,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/LB_Knee_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/LB_Knee_Link.STL" />
       </geometry>
     </collision>
   </link>
@@ -517,7 +517,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/LB_Wheel_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/LB_Wheel_Link.STL" />
       </geometry>
       <material name="">
         <color rgba="1 1 1 1" />
@@ -536,13 +536,13 @@
       <origin xyz="0 0.042 0" rpy="1.57 0 0" />
       <geometry>
         <cylinder radius="0.075" length="0.035"/>
-        <!-- <mesh filename="package://srobot_description/meshes/robotsky_wq/RF_Wheel_Link.STL" /> -->
+        <!-- <mesh filename="package://robotsky_description/meshes/robotsky_wq/RF_Wheel_Link.STL" /> -->
       </geometry>
     </collision>
     <!-- <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://srobot_description/meshes/robotsky_wq/LB_Wheel_Link.STL" />
+        <mesh filename="package://robotsky_description/meshes/robotsky_wq/LB_Wheel_Link.STL" />
       </geometry>
     </collision> -->
   </link>
