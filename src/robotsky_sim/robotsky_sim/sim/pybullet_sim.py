@@ -2,7 +2,7 @@ from .sim_base import SimBase
 from .sim_config import *
 
 import numpy as np
-import pybullet as p
+import pybullet
 import pybullet_data
 import time
 
@@ -11,23 +11,35 @@ class PybulletSim(SimBase):
     def __init__(self, sim_cfg: SimulationCfg):
         super().__init__(sim_cfg)
         if sim_cfg.headless:
-            self.physicsClient = p.connect(p.DIRECT)
+            self.physicsClient = x.connect(pybullet.DIRECT)
         else:
-            self.physicsClient = p.connect(p.GUI)
+            self.physicsClient = pybullet.connect(pybullet.GUI)
 
-    def initialize(self):
-        p.setAdditionalSearchPath(pybullet_data.getDataPath())
-        p.setGravity(0, 0, -9.81)
-        self.plane_id = p.loadURDF("plane.urdf")
+    def initialize(self, robot_cfg: RobotCfg, scene_cfg: SceneCfg):
+        pybullet.setAdditionalSearchPath(pybullet_data.getDataPath())
+        pybullet.setGravity(0, 0, -9.81)
 
-    def is_running(self):
-        pass
+        # Load the robot model
+        self.robot_id = pybullet.loadURDF(robot_cfg.robot_asset_path)
+        self.start_pos = robot_cfg.robot_init_position
+        self.start_orientation = pybullet.getQuaternionFromEuler(robot_cfg.robot_init_orientation)
+        pybullet.resetBasePositionAndOrientation(self.robot_id, self.start_pos, self.start_orientation)
+
+        # load scene
+        self.plane_id = pybullet.loadURDF("plane.urdf")
+
+    def finalize(self):
+        pybullet.disconnect()
 
     def reset(self):
         pass
 
+    def is_running(self):
+        return True
+
     def step(self):
-        pass
+        # TODO : add action
+        pybullet.stepSimulation()
 
     def render(self):
         pass

@@ -8,13 +8,16 @@ class SimBase:
     def __init__(self, sim_cfg: SimulationCfg):
         pass
 
-    def initialize(self):
+    def initialize(self, robot_cfg: RobotCfg, scene_cfg: SceneCfg):
         pass
 
-    def is_running(self):
+    def finalize(self):
         pass
 
     def reset(self):
+        pass
+
+    def is_running(self):
         pass
 
     def step(self):

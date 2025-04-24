@@ -1,4 +1,5 @@
 from sim import *
+import time
 
 
 class SimManager:
@@ -21,10 +22,9 @@ class SimManager:
         else:
             raise ValueError(f"Unknown simulator type: {simulatior_type}")
 
-        self.sim.initialize()
-
     def run(self):
-        self.sim.reset()
+        self.sim.initialize()
+        # self.sim.reset()
 
         while self.sim.is_running():
             state = self.sim.get_state()
@@ -35,6 +35,10 @@ class SimManager:
 
             self.sim.step()
             self.sim.render()
+
+            # TODO : sleep
+
+        self.sim.finalize()
 
     def receive_ros_action(self, action):
         pass

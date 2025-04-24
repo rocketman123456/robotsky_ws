@@ -246,7 +246,8 @@ int main(int argc, char** argv)
 
     try
     {
-        while (rclcpp::ok())
+        dt = 0;
+        while(true)
         {
             dt += 0.002;
 
@@ -269,16 +270,22 @@ int main(int argc, char** argv)
             }
             else
             {
-                for (int i = 0; i < motor_count; ++i)
-                {
-                    data->motor_cmds[i]->pos = pos_end[i];
-                    data->motor_cmds[i]->vel = vel[i];
-                    data->motor_cmds[i]->tau = tau[i];
-                    data->motor_cmds[i]->kp  = kp_end[i];
-                    data->motor_cmds[i]->kd  = kd[i];
-                }
+                break;
             }
 
+            std::this_thread::sleep_until(next_time);
+            next_time += interval;
+        }
+    }
+    catch (std::runtime_error& e)
+    {
+        spdlog::warn("runtime error!");
+    }
+
+    try
+    {
+        while (rclcpp::ok())
+        {
             // pos[1] = -0.6 - 0.2 * sin(2 * M_PI * dt); // RF
             // pos[2] =  1.2 + 0.4 * sin(2 * M_PI * dt);
             // pos[5] = -0.6 - 0.2 * sin(2 * M_PI * dt); // LF
@@ -298,10 +305,6 @@ int main(int argc, char** argv)
             joint_rviz_state.header.stamp = robot->now();
             for (int i = 0; i < motor_count; ++i)
             {
-                // joint_rviz_state.position[i] = data->motor_states[data->motors[i]->id - 1]->pos;
-                // joint_rviz_state.velocity[i] = data->motor_states[data->motors[i]->id - 1]->vel;
-                // joint_rviz_state.effort[i]   = data->motor_states[data->motors[i]->id - 1]->tau;
-
                 joint_rviz_state.position[i] = data->motor_states[i]->pos;
                 joint_rviz_state.velocity[i] = data->motor_states[i]->vel;
                 joint_rviz_state.effort[i]   = data->motor_states[i]->tau;
