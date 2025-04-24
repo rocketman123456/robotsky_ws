@@ -1,8 +1,11 @@
 from .sim_base import SimBase
+from .sim_config import *
+
 import numpy as np
 
+
 class GenesisSim(SimBase):
-    def __init__(self):
+    def __init__(self, sim_cfg: SimulationCfg):
         pass
 
     def initialize(self):
@@ -22,7 +25,6 @@ class GenesisSim(SimBase):
 
     def get_state(self):
         pass
-    
+
     def set_action(self, action):
         pass
-    

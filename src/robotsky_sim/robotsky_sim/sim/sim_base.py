@@ -1,8 +1,11 @@
+from .sim_config import *
+
 import numpy as np
 from abc import ABC, abstractmethod
 
+
 class SimBase:
-    def __init__(self):
+    def __init__(self, sim_cfg: SimulationCfg):
         pass
 
     def initialize(self):
@@ -22,7 +25,6 @@ class SimBase:
 
     def get_state(self):
         raise NotImplementedError("This method should be overridden by subclasses")
-    
+
     def set_action(self, action):
         raise NotImplementedError("This method should be overridden by subclasses")
-    

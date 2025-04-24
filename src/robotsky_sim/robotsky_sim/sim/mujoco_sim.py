@@ -1,9 +1,12 @@
 from .sim_base import SimBase
+from .sim_config import *
+
 import mujoco
 import numpy as np
 
+
 class MujocoSim(SimBase):
-    def __init__(self):
+    def __init__(self, sim_cfg: SimulationCfg):
         pass
 
     def initialize(self):
@@ -11,7 +14,7 @@ class MujocoSim(SimBase):
 
     def is_running(self):
         pass
-    
+
     def reset(self):
         pass
 
@@ -23,7 +26,6 @@ class MujocoSim(SimBase):
 
     def get_state(self):
         pass
-    
+
     def set_action(self, action):
         pass
-    

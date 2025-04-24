@@ -1,19 +1,23 @@
 from sim import *
 
+
 class SimManager:
-    def __init__(self, simulatior_type = "none"):
+    def __init__(self, sim_cfg: SimulationCfg, simulatior_type="none"):
         if simulatior_type == "none":
-            self.sim = SimBase()
+            self.sim = SimBase(sim_cfg=sim_cfg)
             raise ValueError("Simulator type must be specified.")
         elif simulatior_type == "pybullet":
-            from sim.pybullet_sim import SimPyBullet
-            self.sim = SimPyBullet()
-        elif simulatior_type == "mujoco":   
-            from sim.mujoco_sim import SimMuJoCo
-            self.sim = SimMuJoCo()
+            from sim.pybullet_sim import PybulletSim
+
+            self.sim = PybulletSim(sim_cfg=sim_cfg)
+        elif simulatior_type == "mujoco":
+            from sim.mujoco_sim import MujocoSim
+
+            self.sim = MujocoSim(sim_cfg=sim_cfg)
         elif simulatior_type == "Genesis":
             from sim.genesis_sim import GenesisSim
-            self.sim = GenesisSim()
+
+            self.sim = GenesisSim(sim_cfg=sim_cfg)
         else:
             raise ValueError(f"Unknown simulator type: {simulatior_type}")
 
@@ -21,7 +25,7 @@ class SimManager:
 
     def run(self):
         self.sim.reset()
-        
+
         while self.sim.is_running():
             state = self.sim.get_state()
             action = []  # Replace with actual action logic
