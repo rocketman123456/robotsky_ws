@@ -148,53 +148,19 @@ int main(int argc, char** argv)
     }
 
     // clang-format off
-    uint16_t dm_motor_count = 8;
-    float pos_dm[] = {
-         0.1, 0.0, // RF
-        -0.1, 0.0, // LF
-         0.1, 0.0, // RB
-        -0.1, 0.0, // LB
+    float pos_target[] = {
+        0.0, 0.0, 0.0, 0.0, // RF
+        0.0, 0.0, 0.0, 0.0, // LF
+        0.0, 0.0, 0.0, 0.0, // RB
+        0.0, 0.0, 0.0, 0.0, // LB
     };
-    float vel_dm[] = {
-        0.0, 0.0, // RF
-        0.0, 0.0, // LF
-        0.0, 0.0, // RB
-        0.0, 0.0, // LB
-    };
-    float kp_dm[] = {
-        30.0, 0.0, // RF
-        30.0, 0.0, // LF
-        30.0, 0.0, // RB
-        30.0, 0.0, // LB
-    };
-    float kd_dm[] = {
-        1.0, 2.0, // RF
-        1.0, 2.0, // LF
-        1.0, 2.0, // RB
-        1.0, 2.0, // LB
-    };
-
-    uint16_t rs_motor_count = 8;
-    float pos_rs[] = {
-        -0.8,  1.6, // RF
-        -0.8,  1.6, // LF
-         0.8, -1.6, // RB
-         0.8, -1.6, // LB
-    };
-    float kp_rs[] = {
-        30.0, 60.0, // RF
-        30.0, 60.0, // LF
-        30.0, 60.0, // RB
-        30.0, 60.0, // LB
-    };
-    float kd_rs[] = {
-        1.0, 2.0, // RF
-        1.0, 2.0, // LF
-        1.0, 2.0, // RB
-        1.0, 2.0, // LB
-    };
-
     float pos[] = {
+        0.0, 0.0, 0.0, 0.0, // RF
+        0.0, 0.0, 0.0, 0.0, // LF
+        0.0, 0.0, 0.0, 0.0, // RB
+        0.0, 0.0, 0.0, 0.0, // LB
+    };
+    float pos_end[] = {
         0.0, -0.8,  1.6, 0.0, // RF
         0.0, -0.8,  1.6, 0.0, // LF
         0.0,  0.8, -1.6, 0.0, // RB
@@ -212,7 +178,19 @@ int main(int argc, char** argv)
         0.0, 0.0, 0.0, 0.0, // RB
         0.0, 0.0, 0.0, 0.0, // LB
     };
+    float kp_target[] = {
+        0.0, 0.0, 0.0, 0.0, // RF
+        0.0, 0.0, 0.0, 0.0, // LF
+        0.0, 0.0, 0.0, 0.0, // RB
+        0.0, 0.0, 0.0, 0.0, // LB
+    };
     float kp[] = {
+        0.0, 0.0, 0.0, 0.0, // RF
+        0.0, 0.0, 0.0, 0.0, // LF
+        0.0, 0.0, 0.0, 0.0, // RB
+        0.0, 0.0, 0.0, 0.0, // LB
+    };
+    float kp_end[] = {
         30.0, 30.0, 60.0, 0.0, // RF
         30.0, 30.0, 60.0, 0.0, // LF
         30.0, 30.0, 60.0, 0.0, // RB
@@ -264,6 +242,7 @@ int main(int argc, char** argv)
     fps_counter.start();
 
     float dt = 0.0;
+    float total_time = 4.0;
 
     try
     {
@@ -271,23 +250,43 @@ int main(int argc, char** argv)
         {
             dt += 0.002;
 
-            pos[1] = -0.6 - 0.2 * sin(2 * M_PI * dt); // RF
-            pos[2] =  1.2 + 0.4 * sin(2 * M_PI * dt);
-            pos[5] = -0.6 - 0.2 * sin(2 * M_PI * dt); // LF
-            pos[6] =  1.2 + 0.4 * sin(2 * M_PI * dt);
-            pos[9] =  0.6 + 0.2 * sin(2 * M_PI * dt);  // RB
-            pos[10] = -1.2 - 0.4 * sin(2 * M_PI * dt);
-            pos[13] =  0.6 + 0.2 * sin(2 * M_PI * dt); // LB
-            pos[14] = -1.2 - 0.4 * sin(2 * M_PI * dt);
-
-            for (int i = 0; i < motor_infos.size(); ++i)
+            if(dt < total_time)
             {
-                data->motor_cmds[i]->pos = pos[i];
-                data->motor_cmds[i]->vel = vel[i];
-                data->motor_cmds[i]->tau = tau[i];
-                data->motor_cmds[i]->kp  = kp[i];
-                data->motor_cmds[i]->kd  = kd[i];
+                for (int i = 0; i < motor_count; ++i)
+                {
+                    pos_target[i] = pos[i] + (pos_end[i] - pos[i]) * (dt / total_time);
+                    kp_target[i] = kp[i] + (kp_end[i] - kp[i]) * (dt / total_time);
+                }
+
+                for (int i = 0; i < motor_count; ++i)
+                {
+                    data->motor_cmds[i]->pos = pos_target[i];
+                    data->motor_cmds[i]->vel = vel[i];
+                    data->motor_cmds[i]->tau = tau[i];
+                    data->motor_cmds[i]->kp  = kp_target[i];
+                    data->motor_cmds[i]->kd  = kd[i];
+                }
             }
+            else
+            {
+                for (int i = 0; i < motor_count; ++i)
+                {
+                    data->motor_cmds[i]->pos = pos_end[i];
+                    data->motor_cmds[i]->vel = vel[i];
+                    data->motor_cmds[i]->tau = tau[i];
+                    data->motor_cmds[i]->kp  = kp_end[i];
+                    data->motor_cmds[i]->kd  = kd[i];
+                }
+            }
+
+            // pos[1] = -0.6 - 0.2 * sin(2 * M_PI * dt); // RF
+            // pos[2] =  1.2 + 0.4 * sin(2 * M_PI * dt);
+            // pos[5] = -0.6 - 0.2 * sin(2 * M_PI * dt); // LF
+            // pos[6] =  1.2 + 0.4 * sin(2 * M_PI * dt);
+            // pos[9] =  0.6 + 0.2 * sin(2 * M_PI * dt);  // RB
+            // pos[10] = -1.2 - 0.4 * sin(2 * M_PI * dt);
+            // pos[13] =  0.6 + 0.2 * sin(2 * M_PI * dt); // LB
+            // pos[14] = -1.2 - 0.4 * sin(2 * M_PI * dt);
 
             // data->can_buses[0]->step(); // DM
             // data->can_buses[1]->step(); // RS
@@ -317,6 +316,44 @@ int main(int argc, char** argv)
             fps_counter.update();
 
             // 等待直到下一个时间点
+            std::this_thread::sleep_until(next_time);
+            next_time += interval;
+        }
+    }
+    catch (std::runtime_error& e)
+    {
+        spdlog::warn("runtime error!");
+    }
+
+    try
+    {
+        dt = 0;
+        while(true)
+        {
+            dt += 0.002;
+
+            if(dt < total_time)
+            {
+                for (int i = 0; i < motor_count; ++i)
+                {
+                    pos_target[i] = pos_end[i] + (pos[i] - pos_end[i]) * (dt / total_time);
+                    kp_target[i] = kp_end[i] + (kp[i] - kp_end[i]) * (dt / total_time);
+                }
+
+                for (int i = 0; i < motor_count; ++i)
+                {
+                    data->motor_cmds[i]->pos = pos_target[i];
+                    data->motor_cmds[i]->vel = vel[i];
+                    data->motor_cmds[i]->tau = tau[i];
+                    data->motor_cmds[i]->kp  = kp_target[i];
+                    data->motor_cmds[i]->kd  = kd[i];
+                }
+            }
+            else
+            {
+                break;
+            }
+
             std::this_thread::sleep_until(next_time);
             next_time += interval;
         }

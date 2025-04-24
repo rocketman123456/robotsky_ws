@@ -54,8 +54,10 @@ void RSCANBusManager::enable()
         auto motor = data->motors[index];
         auto can = data->can_interfaces[motor->can_index];
 
-        auto* pointer = motor.get();
-        reinterpret_cast<RSMotorControl*>(pointer)->setMITMode();
+        // auto* pointer = motor.get();
+        // reinterpret_cast<RSMotorControl*>(pointer)->setMITMode();
+
+        rs_set_motor_parameter(motor->can_tx, motor->id, 0X7005, RS_Move_Control_mode, RS_Set_mode);
 
         can->send(motor->can_tx);
         usleep(50);

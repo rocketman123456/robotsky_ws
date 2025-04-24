@@ -43,12 +43,13 @@ void DMCANBusManager::writeState(uint16_t index, const dm_motor_fb_t& data_fb)
         data->motor_states[id]->vel = data->motors[index]->state.vel;
         // data->motor_states[id]->tau = data->motors[index]->state.tau;
 
-        // spdlog::info("motor {} - {} - pos : {}, vel : {}", 
-        //     index,
-        //     id + 1,
-        //     data->motor_states[id]->pos,
-        //     data->motor_states[id]->vel
-        // );
+        spdlog::info("motor {} - {} : state : {}, pos : {}, vel : {}", 
+            index,
+            id + 1,
+            data_fb.state,
+            data->motor_states[id]->pos,
+            data->motor_states[id]->vel
+        );
     }
     else
     {
@@ -62,6 +63,23 @@ void DMCANBusManager::enable()
 
     dm_motor_fb_t data_fb;
     can_frame     can_rx;
+
+    for (auto index : motor_indices)
+    {
+        auto motor = data->motors[index];
+        auto can   = data->can_interfaces[motor->can_index];
+
+        dm_clear_err(motor->can_tx, motor->id, DM_MIT_MODE);
+
+        can->send(motor->can_tx);
+        usleep(50);
+        can->receive(motor->can_rx);
+        usleep(50);
+
+        dm_decode(motor->can_rx, data_fb);
+
+        writeState(index, data_fb);
+    }
 
     for (auto index : motor_indices)
     {
