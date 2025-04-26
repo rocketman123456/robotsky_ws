@@ -8,11 +8,11 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <robotsky_interface/msg/motor_cmds.hpp>
+#include <robotsky_interface/msg/motor_states.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
 #include <std_msgs/msg/string.hpp>
-// #include <geometry_msgs/msg/transform_stamped.hpp>
-// #include <tf2_ros/transform_broadcaster.h>
 
 #include <spdlog/spdlog.h>
 
@@ -25,7 +25,9 @@ using Clock     = std::chrono::high_resolution_clock;
 using TimePoint = Clock::time_point;
 using Duration  = std::chrono::duration<double>;
 
-sensor_msgs::msg::JointState joint_rviz_state;
+sensor_msgs::msg::JointState         joint_rviz_state;
+robotsky_interface::msg::MotorCmds   motor_cmds;
+robotsky_interface::msg::MotorStates motor_states;
 
 const uint16_t motor_count = 16;
 
@@ -90,7 +92,9 @@ int main(int argc, char** argv)
 
     auto robot = std::make_shared<Robot>();
 
-    auto joint_rviz_pub = robot->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
+    auto joint_rviz_pub  = robot->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
+    auto joint_state_pub = robot->create_publisher<robotsky_interface::msg::MotorStates>("motor_states", 10);
+
     // TODO : add motor state publisher and cmd subscriber
 
     joint_rviz_state.position.resize(motor_count);
@@ -119,6 +123,9 @@ int main(int argc, char** argv)
         "LB_Knee_Joint",
         "LB_Wheel_Joint",
     };
+
+    motor_cmds.cmds.resize(motor_count);
+    motor_states.states.resize(motor_count);
 
     std::vector<CanInitInfo>    can_infos     = prepare_can();
     std::vector<MotorInitInfo>  motor_infos   = prepare_motor();
@@ -273,6 +280,26 @@ int main(int argc, char** argv)
                 break;
             }
 
+            joint_rviz_state.header.stamp = robot->now();
+            for (int i = 0; i < motor_count; ++i)
+            {
+                joint_rviz_state.position[i] = data->motor_states[i]->pos;
+                joint_rviz_state.velocity[i] = data->motor_states[i]->vel;
+                joint_rviz_state.effort[i]   = data->motor_states[i]->tau;
+            }
+            joint_rviz_pub->publish(joint_rviz_state);
+
+            motor_states.header.stamp = robot->now();
+            for (int i = 0; i < motor_count; ++i)
+            {
+                motor_states.states[i].pos = data->motor_states[i]->pos;
+                motor_states.states[i].vel = data->motor_states[i]->vel;
+                motor_states.states[i].tau = data->motor_states[i]->tau;
+            }
+            joint_state_pub->publish(motor_states);
+
+            rclcpp::spin_some(robot);
+
             std::this_thread::sleep_until(next_time);
             next_time += interval;
         }
@@ -297,6 +324,15 @@ int main(int argc, char** argv)
             // spdlog::info("motor {} - {} : pos {}", id, joint_rviz_state.name[id - 1], data->motor_states[id - 1]->pos);
             // joint_rviz_state.position[0] = 1.0;
             joint_rviz_pub->publish(joint_rviz_state);
+
+            motor_states.header.stamp = robot->now();
+            for (int i = 0; i < motor_count; ++i)
+            {
+                motor_states.states[i].pos = data->motor_states[i]->pos;
+                motor_states.states[i].vel = data->motor_states[i]->vel;
+                motor_states.states[i].tau = data->motor_states[i]->tau;
+            }
+            joint_state_pub->publish(motor_states);
 
             rclcpp::spin_some(robot);
 
@@ -340,6 +376,26 @@ int main(int argc, char** argv)
             {
                 break;
             }
+
+            // joint_rviz_state.header.stamp = robot->now();
+            // for (int i = 0; i < motor_count; ++i)
+            // {
+            //     joint_rviz_state.position[i] = data->motor_states[i]->pos;
+            //     joint_rviz_state.velocity[i] = data->motor_states[i]->vel;
+            //     joint_rviz_state.effort[i]   = data->motor_states[i]->tau;
+            // }
+            // joint_rviz_pub->publish(joint_rviz_state);
+
+            // motor_states.header.stamp = robot->now();
+            // for (int i = 0; i < motor_count; ++i)
+            // {
+            //     motor_states.states[i].pos = data->motor_states[i]->pos;
+            //     motor_states.states[i].vel = data->motor_states[i]->vel;
+            //     motor_states.states[i].tau = data->motor_states[i]->tau;
+            // }
+            // joint_state_pub->publish(motor_states);
+
+            // rclcpp::spin_some(robot);
 
             std::this_thread::sleep_until(next_time);
             next_time += interval;

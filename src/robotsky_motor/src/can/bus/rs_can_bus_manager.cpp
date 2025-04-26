@@ -138,6 +138,27 @@ void RSCANBusManager::step()
         // auto m_id  = motor_index_map[motor->id];
         auto cmd   = data->motor_cmds[motor->id - 1];
 
+        if (cmd->pos > RS_P_MAX)
+            cmd->pos = RS_P_MAX;
+        else if (cmd->pos < RS_P_MIN)
+            cmd->pos = RS_P_MIN;
+        if (cmd->vel > RS_V_MAX)
+            cmd->vel = RS_V_MAX;
+        else if (cmd->vel < RS_V_MIN)
+            cmd->vel = RS_V_MIN;
+        if (cmd->tau > RS_T_MAX)
+            cmd->tau = RS_T_MAX;
+        else if (cmd->tau < RS_T_MIN)
+            cmd->tau = RS_T_MIN;
+        if (cmd->kp > RS_KP_MAX)
+            cmd->kp = RS_KP_MAX;
+        else if (cmd->kp < RS_KP_MIN)
+            cmd->kp = RS_KP_MIN;
+        if (cmd->kd > RS_KD_MAX)
+            cmd->kd = RS_KD_MAX;
+        else if (cmd->kd < RS_KD_MIN)
+            cmd->kd = RS_KD_MIN;
+
         motor->setMixedControlInRad(
             cmd->pos, 
             cmd->vel,
