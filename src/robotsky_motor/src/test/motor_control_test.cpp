@@ -29,6 +29,8 @@ sensor_msgs::msg::JointState         joint_rviz_state;
 robotsky_interface::msg::MotorCmds   motor_cmds;
 robotsky_interface::msg::MotorStates motor_states;
 
+std::shared_ptr<RobotData> data = std::make_shared<RobotData>();
+
 const uint16_t motor_count = 16;
 
 std::vector<CanInitInfo> prepare_can()
@@ -86,6 +88,49 @@ std::vector<CanBusInitInfo> prepare_can_bus()
     return can_bus_infos;
 }
 
+void prepare_hardware()
+{
+    for (int i = 0; i < motor_infos.size(); ++i)
+    {
+        data->motor_states.push_back(std::make_shared<MotorState>());
+        data->motor_cmds.push_back(std::make_shared<MotorCmd>());
+    }
+
+    for (const auto& info : can_infos)
+    {
+        auto can_interface = std::make_shared<CANInterface>();
+        can_interface->initialize(info);
+        data->can_interfaces.push_back(can_interface);
+    }
+
+    for (const auto& info : motor_infos)
+    {
+        auto motor = create_motor_control(info);
+        motor->initialize(info);
+        data->motors.push_back(motor);
+    }
+
+    for (const auto& info : can_bus_infos)
+    {
+        auto can_bus = create_can_bus_manager(info.type);
+        can_bus->setRobotData(data);
+        can_bus->initialize(info);
+        data->can_buses.push_back(can_bus);
+    }
+}
+
+void motor_cmd_callback(const robotsky_interface::msg::MotorStates::SharedPtr cmd)
+{
+    for (int i = 0; i < motor_count; ++i)
+    {
+        data->motor_cmds[i]->pos = cmd->states[i].pos;
+        data->motor_cmds[i]->vel = cmd->states[i].vel;
+        data->motor_cmds[i]->tau = cmd->states[i].tau;
+        data->motor_cmds[i]->kp  = cmd->states[i].kp;
+        data->motor_cmds[i]->kd  = cmd->states[i].kd;
+    }
+}
+
 int main(int argc, char** argv)
 {
     rclcpp::init(argc, argv);
@@ -94,8 +139,6 @@ int main(int argc, char** argv)
 
     auto joint_rviz_pub  = robot->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
     auto joint_state_pub = robot->create_publisher<robotsky_interface::msg::MotorStates>("motor_states", 10);
-
-    // TODO : add motor state publisher and cmd subscriber
 
     joint_rviz_state.position.resize(motor_count);
     joint_rviz_state.velocity.resize(motor_count);
@@ -131,35 +174,7 @@ int main(int argc, char** argv)
     std::vector<MotorInitInfo>  motor_infos   = prepare_motor();
     std::vector<CanBusInitInfo> can_bus_infos = prepare_can_bus();
 
-    std::shared_ptr<RobotData> data = std::make_shared<RobotData>();
-
-    for (int i = 0; i < motor_infos.size(); ++i)
-    {
-        data->motor_states.push_back(std::make_shared<MotorState>());
-        data->motor_cmds.push_back(std::make_shared<MotorCmd>());
-    }
-
-    for (const auto& info : can_infos)
-    {
-        auto can_interface = std::make_shared<CANInterface>();
-        can_interface->initialize(info);
-        data->can_interfaces.push_back(can_interface);
-    }
-
-    for (const auto& info : motor_infos)
-    {
-        auto motor = create_motor_control(info);
-        motor->initialize(info);
-        data->motors.push_back(motor);
-    }
-
-    for (const auto& info : can_bus_infos)
-    {
-        auto can_bus = create_can_bus_manager(info.type);
-        can_bus->setRobotData(data);
-        can_bus->initialize(info);
-        data->can_buses.push_back(can_bus);
-    }
+    prepare_hardware();
 
     // clang-format off
     float pos_target[] = {
@@ -309,6 +324,8 @@ int main(int argc, char** argv)
         spdlog::warn("runtime error!");
     }
 
+    auto motor_cmd_sub = robot->create_subscription<robotsky_interface::msg::MotorCmds>("motor_cmds", 10, motor_cmd_callback);
+
     try
     {
         while (rclcpp::ok())
@@ -348,6 +365,8 @@ int main(int argc, char** argv)
         spdlog::warn("runtime error!");
     }
 
+    robot->destroy_subscription(motor_cmd_sub);
+
     try
     {
         dt = 0;
@@ -376,26 +395,6 @@ int main(int argc, char** argv)
             {
                 break;
             }
-
-            // joint_rviz_state.header.stamp = robot->now();
-            // for (int i = 0; i < motor_count; ++i)
-            // {
-            //     joint_rviz_state.position[i] = data->motor_states[i]->pos;
-            //     joint_rviz_state.velocity[i] = data->motor_states[i]->vel;
-            //     joint_rviz_state.effort[i]   = data->motor_states[i]->tau;
-            // }
-            // joint_rviz_pub->publish(joint_rviz_state);
-
-            // motor_states.header.stamp = robot->now();
-            // for (int i = 0; i < motor_count; ++i)
-            // {
-            //     motor_states.states[i].pos = data->motor_states[i]->pos;
-            //     motor_states.states[i].vel = data->motor_states[i]->vel;
-            //     motor_states.states[i].tau = data->motor_states[i]->tau;
-            // }
-            // joint_state_pub->publish(motor_states);
-
-            // rclcpp::spin_some(robot);
 
             std::this_thread::sleep_until(next_time);
             next_time += interval;
