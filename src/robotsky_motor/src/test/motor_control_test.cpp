@@ -90,6 +90,10 @@ std::vector<CanBusInitInfo> prepare_can_bus()
 
 void prepare_hardware()
 {
+    std::vector<CanInitInfo>    can_infos     = prepare_can();
+    std::vector<MotorInitInfo>  motor_infos   = prepare_motor();
+    std::vector<CanBusInitInfo> can_bus_infos = prepare_can_bus();
+
     for (int i = 0; i < motor_infos.size(); ++i)
     {
         data->motor_states.push_back(std::make_shared<MotorState>());
@@ -119,15 +123,15 @@ void prepare_hardware()
     }
 }
 
-void motor_cmd_callback(const robotsky_interface::msg::MotorStates::SharedPtr cmd)
+void motor_cmd_callback(const robotsky_interface::msg::MotorCmds::SharedPtr cmd)
 {
     for (int i = 0; i < motor_count; ++i)
     {
-        data->motor_cmds[i]->pos = cmd->states[i].pos;
-        data->motor_cmds[i]->vel = cmd->states[i].vel;
-        data->motor_cmds[i]->tau = cmd->states[i].tau;
-        data->motor_cmds[i]->kp  = cmd->states[i].kp;
-        data->motor_cmds[i]->kd  = cmd->states[i].kd;
+        data->motor_cmds[i]->pos = cmd->cmds[i].pos;
+        data->motor_cmds[i]->vel = cmd->cmds[i].vel;
+        data->motor_cmds[i]->tau = cmd->cmds[i].tau;
+        data->motor_cmds[i]->kp  = cmd->cmds[i].kp;
+        data->motor_cmds[i]->kd  = cmd->cmds[i].kd;
     }
 }
 
@@ -169,10 +173,6 @@ int main(int argc, char** argv)
 
     motor_cmds.cmds.resize(motor_count);
     motor_states.states.resize(motor_count);
-
-    std::vector<CanInitInfo>    can_infos     = prepare_can();
-    std::vector<MotorInitInfo>  motor_infos   = prepare_motor();
-    std::vector<CanBusInitInfo> can_bus_infos = prepare_can_bus();
 
     prepare_hardware();
 
@@ -233,7 +233,7 @@ int main(int argc, char** argv)
     };
     // clang-format on
 
-    for (int i = 0; i < motor_infos.size(); ++i)
+    for (int i = 0; i < motor_count; ++i)
     {
         data->motor_cmds[i]->pos = pos[i];
         data->motor_cmds[i]->vel = vel[i];
@@ -337,12 +337,9 @@ int main(int argc, char** argv)
                 joint_rviz_state.velocity[i] = data->motor_states[i]->vel;
                 joint_rviz_state.effort[i]   = data->motor_states[i]->tau;
             }
-            // uint16_t id = 5;
-            // spdlog::info("motor {} - {} : pos {}", id, joint_rviz_state.name[id - 1], data->motor_states[id - 1]->pos);
-            // joint_rviz_state.position[0] = 1.0;
             joint_rviz_pub->publish(joint_rviz_state);
 
-            motor_states.header.stamp = robot->now();
+            motor_states.header.stamp = joint_rviz_state.header.stamp;
             for (int i = 0; i < motor_count; ++i)
             {
                 motor_states.states[i].pos = data->motor_states[i]->pos;
@@ -355,7 +352,6 @@ int main(int argc, char** argv)
 
             fps_counter.update();
 
-            // 等待直到下一个时间点
             std::this_thread::sleep_until(next_time);
             next_time += interval;
         }
@@ -365,7 +361,7 @@ int main(int argc, char** argv)
         spdlog::warn("runtime error!");
     }
 
-    robot->destroy_subscription(motor_cmd_sub);
+    motor_cmd_sub.reset();
 
     try
     {
@@ -410,8 +406,6 @@ int main(int argc, char** argv)
         can_bus->stop();
     }
 
-    // data->can_buses[0]->disable(); // DM
-    // data->can_buses[1]->disable(); // RS
     for (auto can_bus : data->can_buses)
     {
         can_bus->disable();
