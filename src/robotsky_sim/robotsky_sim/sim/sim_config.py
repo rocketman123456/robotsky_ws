@@ -3,12 +3,13 @@ from __future__ import annotations
 
 class SimulationCfg:
     headless: bool = False
+    simulatior_type: str = "none"
 
 
 class RobotCfg:
     robot_asset_path: str = ""
-    robot_init_position: list = []
-    robot_init_orientation: list = []
+    robot_init_position: list = [0.0, 0.0, 0.5]
+    robot_init_orientation: list = [0.0, 0.0, 0.0]
 
 
 class SceneCfg:
