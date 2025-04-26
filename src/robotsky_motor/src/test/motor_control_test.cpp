@@ -8,9 +8,9 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <std_msgs/msg/string.hpp>
-#include <std_msgs/msg/float32_multi_array.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
+#include <std_msgs/msg/float32_multi_array.hpp>
+#include <std_msgs/msg/string.hpp>
 // #include <geometry_msgs/msg/transform_stamped.hpp>
 // #include <tf2_ros/transform_broadcaster.h>
 
@@ -72,8 +72,14 @@ std::vector<CanBusInitInfo> prepare_can_bus()
 {
     std::vector<CanBusInitInfo> can_bus_infos;
 
-    can_bus_infos.push_back({CanType::DM, 1, {0, 1}, {0, 1, 2, 3, 4, 5, 6, 7}});
-    can_bus_infos.push_back({CanType::RS, 2, {2, 3}, {8, 9, 10, 11, 12, 13, 14, 15}});
+    can_bus_infos.push_back({
+        CanType::DM, 1, {0, 1},
+          {0, 1, 2, 3, 4, 5, 6, 7}
+    });
+    can_bus_infos.push_back({
+        CanType::RS, 2, {2, 3},
+          {8, 9, 10, 11, 12, 13, 14, 15}
+    });
 
     return can_bus_infos;
 }
@@ -84,7 +90,8 @@ int main(int argc, char** argv)
 
     auto robot = std::make_shared<Robot>();
 
-    auto joint_rviz_pub  = robot->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
+    auto joint_rviz_pub = robot->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
+    // TODO : add motor state publisher and cmd subscriber
 
     joint_rviz_state.position.resize(motor_count);
     joint_rviz_state.velocity.resize(motor_count);
@@ -106,7 +113,7 @@ int main(int argc, char** argv)
         "RB_Hip_Joint",
         "RB_Knee_Joint",
         "RB_Wheel_Joint",
-        
+
         "LB_Roll_Joint",
         "LB_Hip_Joint",
         "LB_Knee_Joint",
@@ -213,13 +220,6 @@ int main(int argc, char** argv)
         data->motor_cmds[i]->kd  = kd[i];
     }
 
-    // for (int i = 0; i < 10; ++i)
-    // {
-    //     data->can_buses[0]->enable(); // DM
-    //     data->can_buses[1]->enable(); // RS
-    // }
-    // data->can_buses[0]->enable(); // DM
-    // data->can_buses[1]->enable(); // RS
     for (auto can_bus : data->can_buses)
     {
         can_bus->enable();
@@ -241,22 +241,22 @@ int main(int argc, char** argv)
     FPSCounter fps_counter;
     fps_counter.start();
 
-    float dt = 0.0;
+    float dt         = 0.0;
     float total_time = 4.0;
 
     try
     {
         dt = 0;
-        while(true)
+        while (true)
         {
             dt += 0.002;
 
-            if(dt < total_time)
+            if (dt < total_time)
             {
                 for (int i = 0; i < motor_count; ++i)
                 {
                     pos_target[i] = pos[i] + (pos_end[i] - pos[i]) * (dt / total_time);
-                    kp_target[i] = kp[i] + (kp_end[i] - kp[i]) * (dt / total_time);
+                    kp_target[i]  = kp[i] + (kp_end[i] - kp[i]) * (dt / total_time);
                 }
 
                 for (int i = 0; i < motor_count; ++i)
@@ -286,22 +286,6 @@ int main(int argc, char** argv)
     {
         while (rclcpp::ok())
         {
-            // pos[1] = -0.6 - 0.2 * sin(2 * M_PI * dt); // RF
-            // pos[2] =  1.2 + 0.4 * sin(2 * M_PI * dt);
-            // pos[5] = -0.6 - 0.2 * sin(2 * M_PI * dt); // LF
-            // pos[6] =  1.2 + 0.4 * sin(2 * M_PI * dt);
-            // pos[9] =  0.6 + 0.2 * sin(2 * M_PI * dt);  // RB
-            // pos[10] = -1.2 - 0.4 * sin(2 * M_PI * dt);
-            // pos[13] =  0.6 + 0.2 * sin(2 * M_PI * dt); // LB
-            // pos[14] = -1.2 - 0.4 * sin(2 * M_PI * dt);
-
-            // data->can_buses[0]->step(); // DM
-            // data->can_buses[1]->step(); // RS
-            // for (auto can_bus : data->can_buses)
-            // {
-            //     can_bus->step();
-            // }
-
             joint_rviz_state.header.stamp = robot->now();
             for (int i = 0; i < motor_count; ++i)
             {
@@ -331,16 +315,16 @@ int main(int argc, char** argv)
     try
     {
         dt = 0;
-        while(true)
+        while (true)
         {
             dt += 0.002;
 
-            if(dt < total_time)
+            if (dt < total_time)
             {
                 for (int i = 0; i < motor_count; ++i)
                 {
                     pos_target[i] = pos_end[i] + (pos[i] - pos_end[i]) * (dt / total_time);
-                    kp_target[i] = kp_end[i] + (kp[i] - kp_end[i]) * (dt / total_time);
+                    kp_target[i]  = kp_end[i] + (kp[i] - kp_end[i]) * (dt / total_time);
                 }
 
                 for (int i = 0; i < motor_count; ++i)
