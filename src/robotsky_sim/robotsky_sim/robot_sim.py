@@ -8,12 +8,15 @@ def main():
     # Create an instance of the RobotSkySim class
     sim_cfg = SimulationCfg()
     sim_cfg.simulatior_type = "pybullet"
+    sim_cfg.simulatior_type = "mujoco"
 
     pkg_share = get_package_share_directory('robotsky_description')
     urdf_path = os.path.join(pkg_share, 'urdf', 'robotsky_wq.urdf')
+    mjcf_path = os.path.join(pkg_share, 'mjcf', 'robotsky_wq.xml')
     print(f"URDF is at: {urdf_path}")
+    print(f"MJCF is at: {mjcf_path}")
     robot_cfg = RobotCfg()
-    robot_cfg.robot_asset_path = urdf_path
+    robot_cfg.robot_asset_path = mjcf_path
 
     scene_cfg = SceneCfg()
 
@@ -24,8 +27,14 @@ def main():
 
     # Run the simulation
     while sim.is_running():
-        # state = sim.get_state()
-        # sim.set_action([])
+        action = [
+            0.0, -0.5, 1.0, 0.0, #
+            0.0, -0.5, 1.0, 0.0, #
+            0.0, 0.5, -1.0, 0.0, #
+            0.0, 0.5, -1.0, 0.0, #
+        ]
+        state = sim.get_state()
+        sim.set_action(action)
 
         # send state msg
 

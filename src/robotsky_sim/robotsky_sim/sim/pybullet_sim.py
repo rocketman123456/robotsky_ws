@@ -11,19 +11,29 @@ class PybulletSim(SimBase):
     def __init__(self, sim_cfg: SimulationCfg):
         super().__init__(sim_cfg)
         if sim_cfg.headless:
-            self.physicsClient = x.connect(pybullet.DIRECT)
+            self.physicsClient = pybullet.connect(pybullet.DIRECT)
         else:
             self.physicsClient = pybullet.connect(pybullet.GUI)
 
     def initialize(self, robot_cfg: RobotCfg, scene_cfg: SceneCfg):
         pybullet.setAdditionalSearchPath(pybullet_data.getDataPath())
         pybullet.setGravity(0, 0, -9.81)
+        pybullet.setTimeStep(1./500.)  # finer integration
+        pybullet.setPhysicsEngineParameter(numSolverIterations=100)  # more solver loops
 
         # Load the robot model
         self.robot_id = pybullet.loadURDF(robot_cfg.robot_asset_path)
         self.start_pos = robot_cfg.robot_init_position
         self.start_orientation = pybullet.getQuaternionFromEuler(robot_cfg.robot_init_orientation)
         pybullet.resetBasePositionAndOrientation(self.robot_id, self.start_pos, self.start_orientation)
+
+        self.num_joints = pybullet.getNumJoints(self.robot_id) # count joints
+        for i in range(self.num_joints):
+            info = pybullet.getJointInfo(self.robot_id, i)                            
+            joint_name = info[1].decode('utf-8')                          
+            joint_type = info[2]       # e.g. p.JOINT_REVOLUTE, p.JOINT_PRISMATIC
+            lower_limit, upper_limit = info[8], info[9]                    
+            print(f"Joint {i}: {joint_name}, type={joint_type}, limits=({lower_limit},{upper_limit})")
 
         # load scene
         self.plane_id = pybullet.loadURDF("plane.urdf")
@@ -48,7 +58,20 @@ class PybulletSim(SimBase):
         pass
 
     def set_action(self, action):
-        pass
+        # position control
+        for i in range(self.num_joints):
+            # print(i)
+            pybullet.setJointMotorControl2(
+                bodyUniqueId=self.robot_id,
+                jointIndex=i,                       # target joint index
+                controlMode=pybullet.POSITION_CONTROL,     # position control mode :contentReference[oaicite:5]{index=5}
+                targetPosition=action[i],                 # desired joint angle in radians :contentReference[oaicite:6]{index=6}
+                targetVelocity=0,
+                positionGain=1.0,
+                velocityGain=0.5,
+                maxVelocity=20.0,                    # velocity limit (optional) :contentReference[oaicite:8]{index=8}
+                force=15                            # maximum torque/force to apply :contentReference[oaicite:9]{index=9}
+            )
 
 
 # # 4. Load a URDF model (R2D2 robot as an example) :contentReference[oaicite:4]{index=4}

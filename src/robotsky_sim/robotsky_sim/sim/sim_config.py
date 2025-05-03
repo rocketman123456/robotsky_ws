@@ -4,6 +4,9 @@ from __future__ import annotations
 class SimulationCfg:
     headless: bool = False
     simulatior_type: str = "none"
+    timestep: float = 0.002
+    framewidth: int = 1600
+    frameheight: int = 900
 
 
 class RobotCfg:

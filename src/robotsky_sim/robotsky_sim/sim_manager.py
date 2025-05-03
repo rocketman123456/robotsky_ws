@@ -27,10 +27,16 @@ class SimManager:
     def is_running(self):
         return self.sim.is_running()
 
-    def step(self):
-        state = self.sim.get_state()
-        action = []  # Replace with actual action logic
+    def set_action(self, action):
         self.sim.set_action(action)
+
+    def get_state(self):
+        return self.sim.get_state()
+
+    def step(self):
+        # state = self.sim.get_state()
+        # action = []  # Replace with actual action logic
+        # self.sim.set_action(action)
 
         # send state msg
 
