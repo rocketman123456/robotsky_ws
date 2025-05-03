@@ -7,8 +7,9 @@ from .sim_manager import SimManager
 def main():
     # Create an instance of the RobotSkySim class
     sim_cfg = SimulationCfg()
-    sim_cfg.simulatior_type = "pybullet"
+    # sim_cfg.simulatior_type = "pybullet"
     sim_cfg.simulatior_type = "mujoco"
+    # sim_cfg.simulatior_type = "genesis"
 
     pkg_share = get_package_share_directory('robotsky_description')
     urdf_path = os.path.join(pkg_share, 'urdf', 'robotsky_wq.urdf')
@@ -17,6 +18,7 @@ def main():
     print(f"MJCF is at: {mjcf_path}")
     robot_cfg = RobotCfg()
     robot_cfg.robot_asset_path = mjcf_path
+    # robot_cfg.robot_asset_path = urdf_path
 
     scene_cfg = SceneCfg()
 

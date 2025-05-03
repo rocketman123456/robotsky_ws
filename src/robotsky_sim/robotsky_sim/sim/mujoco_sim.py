@@ -10,12 +10,16 @@ import mujoco.viewer
 
 class MujocoSim(SimBase):
     def __init__(self, sim_cfg: SimulationCfg):
+        super().__init__(sim_cfg)
         self.sim_cfg = sim_cfg
         self.timestep = self.sim_cfg.timestep
         self.pause_flag = True
         self.ctrl = [0] * 16
 
     def initialize(self, robot_cfg: RobotCfg, scene_cfg: SceneCfg):
+        self.robot_cfg = robot_cfg
+        self.scene_cfg = scene_cfg
+
         self.model = mujoco.MjModel.from_xml_path(robot_cfg.robot_asset_path)
         self.data = mujoco.MjData(self.model)
         self.model.opt.timestep = self.timestep
