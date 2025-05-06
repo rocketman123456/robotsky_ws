@@ -1,6 +1,11 @@
 from .sim_base import SimBase
 from .sim_config import *
 
+# import glfw
+# # Tell GLFW “yes, decorate windows” before MuJoCo calls its window‑creation code:
+# glfw.init()
+# glfw.window_hint(glfw.DECORATED, glfw.TRUE)
+
 import numpy as np
 import threading
 import time
@@ -59,8 +64,8 @@ class MujocoSim(SimBase):
             self.viewer.cam.trackbodyid = self.model.body("base_link").id
             self.viewer.sync()
 
-        # self.thread_view = threading.Thread(target=self.sync_loop)
-        # self.thread_view.start()
+        self.thread_view = threading.Thread(target=self._sync_loop)
+        self.thread_view.start()
 
         self.running = True
 
@@ -68,7 +73,7 @@ class MujocoSim(SimBase):
         if self.viewer is not None:
             self.viewer.close()
             self.viewer = None
-        # self.thread_view.join()
+        self.thread_view.join()
         self.running = False
 
     def reset(self):
@@ -96,11 +101,24 @@ class MujocoSim(SimBase):
                 mujoco.mj_forward(self.model, self.data)
 
     def render(self):
-        self.viewer.sync()
+        # self.viewer.sync()
         pass
 
     def get_state(self):
-        return []
+        try:
+            qp = self.data.qpos[-16:].copy()
+            qv = self.data.qvel[-16:].copy()
+            quat = self.data.sensor("BodyQuat").data.copy()
+            gyro = self.data.sensor("BodyGyro").data.copy()
+            acc = self.data.sensor("BodyAcc").data.copy()
+            return qp, qv, quat, gyro, acc
+        except:
+            qp = []
+            qv = []
+            quat = []
+            gyro = []
+            acc = []
+            return qp, qv, quat, gyro, acc
 
     def set_action(self, action):
         self._control_callback(action)

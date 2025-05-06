@@ -78,7 +78,12 @@ class GenesisSim(SimBase):
         pass
 
     def get_state(self):
-        pass
+        qp = []
+        qv = []
+        quat = []
+        gyro = []
+        acc = []
+        return qp, qv, quat, gyro, acc
 
     def set_action(self, action):
         pass

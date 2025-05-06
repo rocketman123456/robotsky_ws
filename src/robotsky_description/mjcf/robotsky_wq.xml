@@ -184,11 +184,11 @@
     <jointvel name="LB_Wheel_vel" joint="LB_Wheel_Joint" />
 
     <accelerometer name="BodyAcc" site="imu" />
-    <velocimeter name="BodyVel" site="imu" />
     <gyro name="BodyGyro" site="imu" />
-
-    <framepos name="BodyPos" objtype="site" objname="imu" />
     <framequat name="BodyQuat" objtype="site" objname="imu" />
+
+    <velocimeter name="BodyVel" site="imu" />
+    <framepos name="BodyPos" objtype="site" objname="imu" />
     <!-- <framepos name="RFEndPos" objtype="site" objname="RFEndSite" /> -->
     <!-- <framepos name="LFEndPos" objtype="site" objname="LFEndSite" /> -->
     <!-- <framepos name="RHEndPos" objtype="site" objname="RHEndSite" /> -->

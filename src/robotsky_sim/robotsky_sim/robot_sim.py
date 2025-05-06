@@ -33,8 +33,14 @@ def main(args=None):
 
     sim = SimManager(sim_cfg = sim_cfg, robot_cfg = robot_cfg, scene_cfg = scene_cfg)
 
-    # add action subscriber
-    # add state publisher
+    action = [
+        0.0, -0.5, 1.0, 0.0, #
+        0.0, -0.5, 1.0, 0.0, #
+        0.0, 0.5, -1.0, 0.0, #
+        0.0, 0.5, -1.0, 0.0, #
+    ]
+    # state = sim.get_state()
+    sim.set_action(action)
 
     # Run the simulation
     try:

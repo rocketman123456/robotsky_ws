@@ -32,9 +32,36 @@ class SimManager(Node):
         
         self.sim.initialize(robot_cfg=robot_cfg, scene_cfg=scene_cfg)
 
+        self.prev_pause_flag = True
+        self.curr_pause_flag = True
+
+        self.joint_state = JointState()
+        self.joint_state.name = [
+            "RF_Roll_Joint",
+            "RF_Hip_Joint",
+            "RF_Knee_Joint",
+            "RF_Wheel_Joint",
+            "LF_Roll_Joint",
+            "LF_Hip_Joint",
+            "LF_Knee_Joint",
+            "LF_Wheel_Joint",
+            "RB_Roll_Joint",
+            "RB_Hip_Joint",
+            "RB_Knee_Joint",
+            "RB_Wheel_Joint",
+            "LB_Roll_Joint",
+            "LB_Hip_Joint",
+            "LB_Knee_Joint",
+            "LB_Wheel_Joint",
+        ]
+
+        # add action subscriber
+        self.sub_cmds = self.create_subscription(MotorCmds, "/motor_cmds", self.receive_ros_action, 10)
+
+        # add state publisher
         self.pub_joints = self.create_publisher(MotorStates, "/motor_states", 10)
         self.pub_rviz = self.create_publisher(JointState, "/joint_states", 10)
-        self.pub_imu = self.create_publisher(Imu, "/srobot_imu", 10)
+        self.pub_imu = self.create_publisher(Imu, "/robotsky_imu", 10)
         self.pub_sim_state = self.create_publisher(Bool, "/pause_flag", 10)
 
         timer_period = 1.0 / 500.0  # seconds
@@ -51,15 +78,6 @@ class SimManager(Node):
 
     def step(self):
         try:
-            action = [
-                0.0, -0.5, 1.0, 0.0, #
-                0.0, -0.5, 1.0, 0.0, #
-                0.0, 0.5, -1.0, 0.0, #
-                0.0, 0.5, -1.0, 0.0, #
-            ]
-            state = self.get_state()
-            self.set_action(action)
-
             # send state msg
             self.publish_ros_state()
 
@@ -77,7 +95,61 @@ class SimManager(Node):
     def receive_ros_action(self, action):
         pass
 
+    def _pub_pause_flag(self):
+        # TODO : check
+        self.curr_pause_flag = self.sim.pause_flag
+        if self.curr_pause_flag != self.prev_pause_flag:
+            sim_state = Bool()
+            sim_state.data = self.sim.pause_flag
+            self.pub_sim_state.publish(sim_state)
+        self.prev_pause_flag = self.curr_pause_flag
+
+    def _pub_motor_state(self, t, qp, qv):
+        motor_state_msg = MotorStates()
+        motor_state_msg.header.stamp = t.to_msg()
+        for i in range(16):
+            obj = MotorState()
+            obj.pos = qp[i]
+            obj.vel = qv[i]
+            obj.tau = 0.0
+            motor_state_msg.states.append(obj)
+
+        self.pub_joints.publish(motor_state_msg)
+
+    def _pub_motor_state_rviz(self, t, qp, qv):
+        self.joint_state.header.stamp = t.to_msg()
+        self.joint_state.position = 16 * [float(0.0)]
+        self.joint_state.velocity = 16 * [float(0.0)]
+        for i in range(16):
+            self.joint_state.position[i] = float(qp[i])
+            self.joint_state.velocity[i] = float(qv[i])
+
+        self.pub_rviz.publish(self.joint_state)
+
+    def _pub_imu(self, t, quat, gyro, acc):
+        imu_msg = Imu()
+        imu_msg.header.stamp = t.to_msg()
+
+        imu_msg.orientation.w = quat[0]
+        imu_msg.orientation.x = quat[1]
+        imu_msg.orientation.y = quat[2]
+        imu_msg.orientation.z = quat[3]
+
+        imu_msg.angular_velocity.x = gyro[0]
+        imu_msg.angular_velocity.y = gyro[1]
+        imu_msg.angular_velocity.z = gyro[2]
+
+        imu_msg.linear_acceleration.x = acc[0]
+        imu_msg.linear_acceleration.y = acc[1]
+        imu_msg.linear_acceleration.z = acc[2]
+
+        self.pub_imu.publish(imu_msg)
+
     def publish_ros_state(self):
-        sim_state = Bool()
-        sim_state.data = self.sim.pause_flag
-        self.pub_sim_state.publish(sim_state)
+        t = self.get_clock().now()
+        qp, qv, quat, gyro, acc = self.get_state()
+
+        self._pub_pause_flag()
+        self._pub_motor_state(t, qp, qv)
+        self._pub_motor_state_rviz(t, qp, qv)
+        self._pub_imu(t, quat, gyro, acc)
