@@ -3,11 +3,12 @@ from .sim_config import *
 
 import numpy as np
 import genesis as gs
-import os
 
-# Force GLX backend for both MuJoCo and PyOpenGL
-os.environ["MUJOCO_GL"]         = "glx"
-os.environ["PYOPENGL_PLATFORM"] = "glx"
+# import os
+
+# # Force GLX backend for both MuJoCo and PyOpenGL
+# os.environ["MUJOCO_GL"]         = "glx"
+# os.environ["PYOPENGL_PLATFORM"] = "glx"
 
 class GenesisSim(SimBase):
     def __init__(self, sim_cfg: SimulationCfg):

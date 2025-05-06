@@ -4,7 +4,16 @@ import os
 from .sim import *
 from .sim_manager import SimManager
 
-def main():
+import rclpy
+from rclpy.node import Node
+from ament_index_python.packages import get_package_share_directory
+from std_msgs.msg import Bool
+from sensor_msgs.msg import JointState, Imu
+from robotsky_interface.msg import MotorCmds, MotorStates, MotorCmd, MotorState
+
+def main(args=None):
+    rclpy.init(args=args)
+
     # Create an instance of the RobotSkySim class
     sim_cfg = SimulationCfg()
     # sim_cfg.simulatior_type = "pybullet"
@@ -28,20 +37,14 @@ def main():
     # add state publisher
 
     # Run the simulation
-    while sim.is_running():
-        action = [
-            0.0, -0.5, 1.0, 0.0, #
-            0.0, -0.5, 1.0, 0.0, #
-            0.0, 0.5, -1.0, 0.0, #
-            0.0, 0.5, -1.0, 0.0, #
-        ]
-        state = sim.get_state()
-        sim.set_action(action)
+    try:
+        rclpy.spin(sim)
+    except:
+            print()
 
-        # send state msg
-
-        sim.step()
-        # sim.render()
+    sim.sim.finalize()
+    
+    rclpy.shutdown()
 
 if __name__ == "__main__":
     main()

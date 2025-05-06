@@ -66,9 +66,9 @@ class MujocoSim(SimBase):
 
     def finalize(self):
         if self.viewer is not None:
-            self.viewer.free()
+            self.viewer.close()
             self.viewer = None
-        self.thread_view.join()
+        # self.thread_view.join()
         self.running = False
 
     def reset(self):
@@ -123,9 +123,6 @@ class MujocoSim(SimBase):
             with self.viewer.lock():
                 if chr(keycode) == " ":
                     self.pause_flag = not self.pause_flag
-                    # simState = Bool()
-                    # simState.data = self.pause_flag
-                    # self.pub_sim_state.publish(simState)
         except:
             # self.viewer.unlock()
             print()
