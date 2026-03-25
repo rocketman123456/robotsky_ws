@@ -1,0 +1,6 @@
+#!/usr/bin/env python3
+"""Launcher: avoids console_scripts + importlib.metadata with symlink-install."""
+from robotsky_teleop.xbox_cmd_vel_node import main
+
+if __name__ == "__main__":
+    main()

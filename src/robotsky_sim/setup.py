@@ -1,4 +1,8 @@
+import os
+import sys
 from setuptools import find_packages, setup
+from setuptools.command.develop import develop as _develop
+
 
 package_name = "robotsky_sim"
 
@@ -16,7 +20,6 @@ setup(
     maintainer_email="759094438@qq.com",
     description="TODO: Package description",
     license="Apache-2.0",
-    tests_require=["pytest"],
     entry_points={
         "console_scripts": [
             "robot_sim = robotsky_sim.robot_sim:main",

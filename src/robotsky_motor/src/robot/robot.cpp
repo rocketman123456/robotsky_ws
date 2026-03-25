@@ -2,6 +2,9 @@
 #include "can/can_bus_factory.h"
 #include "motor/motor_factory.h"
 
+#include <algorithm>
+#include <functional>
+
 Robot::Robot()
     : Node("robotsky_motor")
 {
@@ -24,7 +27,8 @@ void Robot::initCANBus(const std::vector<CanBusInitInfo>& bus_infos)
     for (const auto& info : bus_infos)
     {
         auto can_bus = create_can_bus_manager(info.type);
-        // can_interface->initialize(info);
+        can_bus->setRobotData(data);
+        can_bus->initialize(info);
 
         data->can_buses.push_back(can_bus);
     }
@@ -32,16 +36,86 @@ void Robot::initCANBus(const std::vector<CanBusInitInfo>& bus_infos)
 
 void Robot::initMotors(const std::vector<MotorInitInfo>& motor_infos)
 {
+    for (size_t i = 0; i < motor_infos.size(); ++i)
+    {
+        data->motor_states.push_back(std::make_shared<MotorState>());
+        data->motor_cmds.push_back(std::make_shared<MotorCmd>());
+    }
+
     for (const auto& info : motor_infos)
     {
         auto motor = create_motor_control(info);
+        motor->initialize(info);
 
         data->motors.push_back(motor);
     }
 }
 
+void Robot::initRosInterfaces(std::size_t motor_count)
+{
+    motor_count_ = motor_count;
+
+    auto qos = rclcpp::QoS(rclcpp::KeepLast(10)).best_effort();
+
+    motor_states_pub_ = create_publisher<robotsky_interface::msg::MotorStates>(
+        "motor_states",
+        qos
+    );
+    motor_cmds_sub_   = create_subscription<robotsky_interface::msg::MotorCmds>(
+        "motor_cmds",
+        qos, //rclcpp::SensorDataQoS(),
+        std::bind(&Robot::onMotorCmds, this, std::placeholders::_1)
+    );
+}
+
+void Robot::onMotorCmds(const robotsky_interface::msg::MotorCmds::SharedPtr msg)
+{
+    if (motor_count_ == 0 || data->motor_cmds.size() < motor_count_)
+    {
+        return;
+    }
+
+    const std::size_t n = std::min<std::size_t>(motor_count_, msg->cmds.size());
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        auto& mc = data->motor_cmds[i];
+        mc->pos = msg->cmds[i].pos;
+        mc->vel = msg->cmds[i].vel;
+        mc->tau = msg->cmds[i].tau;
+        mc->kp  = msg->cmds[i].kp;
+        mc->kd  = msg->cmds[i].kd;
+    }
+}
+
+void Robot::publishMotorStates()
+{
+    if (motor_count_ == 0 || !motor_states_pub_ || data->motor_states.size() < motor_count_)
+    {
+        return;
+    }
+
+    robotsky_interface::msg::MotorStates out;
+    out.header.stamp = now();
+    out.states.resize(motor_count_);
+
+    for (std::size_t i = 0; i < motor_count_; ++i)
+    {
+        std::lock_guard<std::mutex> lock(data->motor_states[i]->mutex);
+        out.states[i].pos = data->motor_states[i]->pos;
+        out.states[i].vel = data->motor_states[i]->vel;
+        out.states[i].tau = data->motor_states[i]->tau;
+    }
+
+    motor_states_pub_->publish(out);
+}
+
 void Robot::start()
 {
+    for (auto& can_bus : data->can_buses)
+    {
+        can_bus->enable();
+    }
+
     for (auto& can_bus : data->can_buses)
     {
         can_bus->start();
@@ -162,4 +236,6 @@ void Robot::tickStateMachine()
             // 可尝试恢复
             break;
     }
+
+    publishMotorStates();
 }

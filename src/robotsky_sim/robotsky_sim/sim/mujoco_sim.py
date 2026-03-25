@@ -11,6 +11,7 @@ import threading
 import time
 import mujoco
 import mujoco.viewer
+from robotsky_interface.msg import MotorCmds, MotorStates, MotorCmd, MotorState
 
 
 class MujocoSim(SimBase):
@@ -52,8 +53,8 @@ class MujocoSim(SimBase):
             self.viewer = mujoco.viewer.launch_passive(
                 self.model, 
                 self.data, 
-                show_left_ui=True, 
-                show_right_ui=True, 
+                show_left_ui=False, 
+                show_right_ui=False, 
                 key_callback=self._key_callback,
             )
             # Reset the simulation to the initial keyframe.
@@ -81,22 +82,20 @@ class MujocoSim(SimBase):
         pass
 
     def is_running(self):
-        if self.viewer != None:
+        if self.viewer is not None:
             self.running = self.running and self.viewer.is_running()
         return self.running
 
     def step(self):
-        if self.viewer != None:
+        if self.viewer is not None:
             with self.viewer.lock():
                 if not self.pause_flag:
                     mujoco.mj_step(self.model, self.data)
-                    # self.publish_msg()
                 else:
                     mujoco.mj_forward(self.model, self.data)
         else:
             if not self.pause_flag:
                 mujoco.mj_step(self.model, self.data)
-                # self.publish_msg()
             else:
                 mujoco.mj_forward(self.model, self.data)
 
@@ -106,30 +105,35 @@ class MujocoSim(SimBase):
 
     def get_state(self):
         try:
-            qp = self.data.qpos[-16:].copy()
-            qv = self.data.qvel[-16:].copy()
+            qp   = self.data.qpos[-16:].copy()
+            qv   = self.data.qvel[-16:].copy()
             quat = self.data.sensor("BodyQuat").data.copy()
             gyro = self.data.sensor("BodyGyro").data.copy()
-            acc = self.data.sensor("BodyAcc").data.copy()
+            acc  = self.data.sensor("BodyAcc").data.copy()
             return qp, qv, quat, gyro, acc
-        except:
-            qp = []
-            qv = []
-            quat = []
-            gyro = []
-            acc = []
-            return qp, qv, quat, gyro, acc
+        except Exception as e:
+            print(f"[MujocoSim] get_state error: {e}")
+            return [], [], [], [], []
+    
+    def receive_ros_action(self, msg: MotorCmds):
+        action = [msg.cmds[i].pos for i in range(16)]
+        action[3] = msg.cmds[3].vel
+        action[7] = msg.cmds[7].vel
+        action[11] = msg.cmds[11].vel
+        action[15] = msg.cmds[15].vel
+        self.set_action(action)
 
     def set_action(self, action):
         self._control_callback(action)
 
     def _sync_loop(self):
-        if self.viewer != None:
+        if self.viewer is not None:
             while self.viewer.is_running():
                 self.viewer.sync()
                 time.sleep(0.010)
         else:
-            time.sleep(0.010)
+            while self.running:
+                time.sleep(0.010)
 
     def _control_callback(self, action):
         for i in range(16):
@@ -141,6 +145,5 @@ class MujocoSim(SimBase):
             with self.viewer.lock():
                 if chr(keycode) == " ":
                     self.pause_flag = not self.pause_flag
-        except:
-            # self.viewer.unlock()
-            print()
+        except Exception as e:
+            print(f"[MujocoSim] key_callback error: {e}")

@@ -2,6 +2,9 @@
 
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
+#include <cmath>
+
 void MotorControl::initialize(const MotorInitInfo& info)
 {
     spdlog::info("Motor init: {}, {}, {}",
@@ -23,16 +26,12 @@ void MotorControl::initialize(const MotorInitInfo& info)
 
 void MotorControl::forwardDataComputeDeg(double pos, double vel, double tau, double kp, double kd)
 {
-    // std::lock_guard<std::mutex> lock(cmd.mutex);
+    constexpr double kDegToRad = M_PI / 180.0;
 
-    if (tau > torque_upper_limit)
-        tau = torque_upper_limit;
-    else if (tau < torque_lower_limit)
-        tau = torque_lower_limit;
+    tau = std::clamp(tau, torque_lower_limit, torque_upper_limit);
 
-    // add position delta
-    cmd.pos = direction * ((pos * M_PI / 180.0 - delta) * pos_scalar) + offset * pos_scalar;
-    cmd.vel = vel * direction * vel_scalar * M_PI / 180.0;
+    cmd.pos = direction * ((pos * kDegToRad - delta) * pos_scalar) + offset * pos_scalar;
+    cmd.vel = vel * direction * vel_scalar * kDegToRad;
     cmd.tau = tau * direction * tau_scalar;
     cmd.kp  = kp;
     cmd.kd  = kd;
@@ -42,12 +41,7 @@ void MotorControl::forwardDataComputeDeg(double pos, double vel, double tau, dou
 
 void MotorControl::forwardDataComputeRad(double pos, double vel, double tau, double kp, double kd)
 {
-    // std::lock_guard<std::mutex> lock(cmd.mutex);
-
-    if (tau > torque_upper_limit)
-        tau = torque_upper_limit;
-    else if (tau < torque_lower_limit)
-        tau = torque_lower_limit;
+    tau = std::clamp(tau, torque_lower_limit, torque_upper_limit);
 
     cmd.pos = direction * ((pos - delta) * pos_scalar) + offset;
     cmd.vel = direction * vel * vel_scalar;

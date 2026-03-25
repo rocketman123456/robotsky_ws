@@ -12,15 +12,16 @@ def generate_launch_description():
 
     return launch.LaunchDescription(
         [
-            Node(
-                package="robot_state_publisher",
-                executable="robot_state_publisher",
-                name="robot_state_publisher",
-                output="screen",
-                parameters=[{"robot_description": robot_desc}],
-                arguments=[urdf_path],
-            ),
+            # Node(
+            #     package="robot_state_publisher",
+            #     executable="robot_state_publisher",
+            #     name="robot_state_publisher",
+            #     output="screen",
+            #     parameters=[{"robot_description": robot_desc}],
+            #     arguments=[urdf_path],
+            # ),
             # Node(package="robotsky_motor", executable="robot_node", name="robot_node"),
-            # Node(package="robotsky_imu", executable="imu_node", name="imu_node"),
+            Node(package="robotsky_motor", executable="motor_control_test", name="motor_control_test"),
+            Node(package="robotsky_imu", executable="imu_node", name="imu_node"),
         ]
     )
