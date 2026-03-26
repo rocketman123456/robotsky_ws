@@ -24,10 +24,10 @@ setup(
         # Only install regular files. `model/*` may contain directories
         # (timestamp folders), which breaks colcon's symlink_data step.
         (os.path.join('share', package_name, 'model'),
-            [p for p in glob('model/**.pt') if os.path.isfile(p)]),
+            [p for p in glob('model/**.pt') + glob('model/**.onnx') if os.path.isfile(p)]),
         ("share/" + package_name, ["package.xml"]),
     ],
-    install_requires=["setuptools"],
+    install_requires=["setuptools", "onnxruntime>=1.16.0"],
     zip_safe=True,
     maintainer="rocketsky",
     maintainer_email="759094438@qq.com",

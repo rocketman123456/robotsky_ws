@@ -39,7 +39,7 @@ ros2 run robotsky_rl_controller rl_controller \
 
 ros2 run robotsky_rl_controller rl_controller \
   --ros-args \
-  -p model_path:=model/exported_policy_robotsky_wq-2026-03-19_16-07-26.pt \
+  -p model_path:=model/exported_policy_robotsky_wq-2026-03-19_16-07-26.onnx \
   -p cpu_core:=2 \
   -p action_scale:=0.25 \
   -p wheel_action_scale:=4.0 \

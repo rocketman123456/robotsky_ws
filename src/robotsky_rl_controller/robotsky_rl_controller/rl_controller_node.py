@@ -6,7 +6,7 @@ import os
 import threading
 import time
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import numpy as np
 import rclpy
@@ -18,7 +18,7 @@ from std_msgs.msg import Bool
 from sensor_msgs.msg import Imu
 from robotsky_interface.msg import MotorCmd, MotorCmds, MotorState, MotorStates
 
-from .policy import BasePolicy, MLPPolicy
+from .policy import MLPPolicy, OnnxPolicy
 
 
 # ---------------------------------------------------------------------------
@@ -81,8 +81,8 @@ class RLControllerNode(Node):
     Parameters (ROS):
         control_frequency (double, default 50.0)  : inference loop Hz
         cpu_core          (int,    default -1)     : CPU affinity; -1 = no binding
-        model_path        (string, default "")     : path to .pt checkpoint;
-                                                     empty = random weights
+        model_path        (string, default "")     : path to .onnx or .pt/.pth;
+                                                     empty = random MLP weights
         action_scale      (double, default 0.25)   : scale applied to policy output
         wheel_action_scale (double, default 4.0)  : scale applied to wheel joint actions
         clip_observations (double, default 100.0) : clip obs values before network
@@ -202,8 +202,6 @@ class RLControllerNode(Node):
 
         self._paused = bool(self.get_parameter("pause_initial").value)
 
-        action_scale_for_policy = 1.0
-
         self.get_logger().info(f"RL Controller | freq={self._freq} Hz | " f"cpu_core={self._cpu_core} | " f"kp={self._kp} | kd={self._kd}")
 
         # ----------------------------------------------------------------
@@ -222,26 +220,10 @@ class RLControllerNode(Node):
         self._has_motors = False
 
         # ----------------------------------------------------------------
-        # Policy
+        # Policy (.onnx via ONNX Runtime, or .pt/.pth via PyTorch)
         # ----------------------------------------------------------------
-        self._policy: BasePolicy = MLPPolicy(
-            obs_dim=OBS_DIM * self._obs_history_len,
-            action_dim=ACTION_DIM,
-            hidden_dims=[512, 256, 128],
-            activation="elu",
-            action_scale=action_scale_for_policy,
-            device="cpu",
-        )
-
-        if self._model_path:
-            resolved = self._resolve_model_path(self._model_path)
-            if resolved is not None:
-                self.get_logger().info(f"Loading model from {resolved}")
-                self._policy.load(resolved)
-            else:
-                self.get_logger().warn(f"Model not found for model_path='{self._model_path}'. " "Using random weights.")
-        else:
-            self.get_logger().warn("No model_path set — using random weights")
+        obs_dim_total = OBS_DIM * self._obs_history_len
+        self._policy: Union[MLPPolicy, OnnxPolicy] = self._init_policy(obs_dim_total)
 
         # ----------------------------------------------------------------
         # ROS 2 subscribers & publisher
@@ -465,6 +447,44 @@ class RLControllerNode(Node):
     # ------------------------------------------------------------------
     # Path helpers
     # ------------------------------------------------------------------
+
+    def _init_policy(self, obs_dim: int) -> Union[MLPPolicy, OnnxPolicy]:
+        action_scale_for_policy = 1.0
+
+        def random_mlp() -> MLPPolicy:
+            return MLPPolicy(
+                obs_dim=obs_dim,
+                action_dim=ACTION_DIM,
+                hidden_dims=[512, 256, 128],
+                activation="elu",
+                action_scale=action_scale_for_policy,
+                device="cpu",
+            )
+
+        if not self._model_path:
+            self.get_logger().warn("No model_path set — using random weights")
+            return random_mlp()
+
+        resolved = self._resolve_model_path(self._model_path)
+        if resolved is None:
+            self.get_logger().warn(
+                f"Model not found for model_path='{self._model_path}'. Using random weights."
+            )
+            return random_mlp()
+
+        self.get_logger().info(f"Loading model from {resolved}")
+        if resolved.suffix.lower() == ".onnx":
+            policy = OnnxPolicy(
+                obs_dim=obs_dim,
+                action_dim=ACTION_DIM,
+                action_scale=action_scale_for_policy,
+            )
+            policy.load(resolved)
+            return policy
+
+        policy = random_mlp()
+        policy.load(resolved)
+        return policy
 
     def _resolve_model_path(self, model_path: str) -> Optional[Path]:
         """
