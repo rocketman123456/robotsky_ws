@@ -77,10 +77,12 @@ std::vector<CanBusInitInfo> prepare_can_bus()
     std::vector<CanBusInitInfo> can_bus_infos;
 
     can_bus_infos.push_back({
-        CanType::DM, 1, {0, 1}, {0, 1, 2, 3, 4, 5, 6, 7}
+        CanType::DM, 1, {0, 1},
+          {0, 1, 2, 3, 4, 5, 6, 7}
     });
     can_bus_infos.push_back({
-        CanType::RS, 2, {2, 3}, {8, 9, 10, 11, 12, 13, 14, 15}
+        CanType::RS, 2, {2, 3},
+          {8, 9, 10, 11, 12, 13, 14, 15}
     });
 
     return can_bus_infos;
@@ -361,53 +363,53 @@ int main(int argc, char** argv)
 
     motor_cmd_sub.reset();
 
-    try
-    {
-        dt = 0;
-        while (true)
-        {
-            dt += 0.002;
+    // try
+    // {
+    //     dt = 0;
+    //     while (true)
+    //     {
+    //         dt += 0.002;
 
-            if (dt < total_time)
-            {
-                for (int i = 0; i < motor_count; ++i)
-                {
-                    pos_target[i] = pos_end[i] + (pos[i] - pos_end[i]) * (dt / total_time);
-                    kp_target[i]  = kp_end[i] + (kp[i] - kp_end[i]) * (dt / total_time);
-                }
+    //         if (dt < total_time)
+    //         {
+    //             for (int i = 0; i < motor_count; ++i)
+    //             {
+    //                 pos_target[i] = pos_end[i] + (pos[i] - pos_end[i]) * (dt / total_time);
+    //                 kp_target[i]  = kp_end[i] + (kp[i] - kp_end[i]) * (dt / total_time);
+    //             }
 
-                for (int i = 0; i < motor_count; ++i)
-                {
-                    data->motor_cmds[i]->pos = pos_target[i];
-                    data->motor_cmds[i]->vel = vel[i];
-                    data->motor_cmds[i]->tau = tau[i];
-                    data->motor_cmds[i]->kp  = kp_target[i];
-                    data->motor_cmds[i]->kd  = kd[i];
-                }
-            }
-            else
-            {
-                break;
-            }
+    //             for (int i = 0; i < motor_count; ++i)
+    //             {
+    //                 data->motor_cmds[i]->pos = pos_target[i];
+    //                 data->motor_cmds[i]->vel = vel[i];
+    //                 data->motor_cmds[i]->tau = tau[i];
+    //                 data->motor_cmds[i]->kp  = kp_target[i];
+    //                 data->motor_cmds[i]->kd  = kd[i];
+    //             }
+    //         }
+    //         else
+    //         {
+    //             break;
+    //         }
 
-            std::this_thread::sleep_until(next_time);
-            next_time += interval;
-        }
-    }
-    catch (std::runtime_error& e)
-    {
-        spdlog::warn("runtime error!");
-    }
+    //         std::this_thread::sleep_until(next_time);
+    //         next_time += interval;
+    //     }
+    // }
+    // catch (std::runtime_error& e)
+    // {
+    //     spdlog::warn("runtime error!");
+    // }
 
     for (auto can_bus : data->can_buses)
     {
         can_bus->stop();
     }
 
-    for (auto can_bus : data->can_buses)
-    {
-        can_bus->disable();
-    }
+    // for (auto can_bus : data->can_buses)
+    // {
+    //     can_bus->disable();
+    // }
 
     std::this_thread::sleep_for(200ms);
 

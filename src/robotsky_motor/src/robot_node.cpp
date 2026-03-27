@@ -90,41 +90,40 @@ int main(int argc, char** argv)
     robot->initCAN(can_infos);
     robot->initMotors(motor_infos);
     robot->initCANBus(can_bus_infos);
+    robot->initRosInterfaces(motor_infos.size());
+    robot->start();
 
-    double frequency_hz = 500;
-    auto   interval     = Duration(1.0 / frequency_hz);
-    auto   next_time    = Clock::now() + interval;
+    constexpr double kFrequencyHz = 500.0;
+    const auto       interval     = Duration(1.0 / kFrequencyHz);
+    auto             next_time    = Clock::now() + interval;
 
     auto thread_id     = std::this_thread::get_id();
     auto native_handle = *reinterpret_cast<std::thread::native_handle_type*>(&thread_id);
     set_thread(0, native_handle);
 
     FPSCounter fps_counter(true);
-
     fps_counter.start();
 
     try
     {
         while (rclcpp::ok())
         {
-            // TODO : task
-            // robot send cmd to motor
-            // robot update motor state
-            // send robot joint state msg
+            robot->tickStateMachine();
 
             rclcpp::spin_some(robot);
 
             fps_counter.update();
 
-            // 等待直到下一个时间点
             std::this_thread::sleep_until(next_time);
             next_time += interval;
         }
     }
-    catch (std::runtime_error& e)
+    catch (const std::runtime_error& e)
     {
-        spdlog::warn("runtime error!");
+        spdlog::error("Runtime error in main loop: {}", e.what());
     }
+
+    robot->stop();
 
     rclcpp::shutdown();
 }

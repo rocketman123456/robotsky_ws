@@ -78,13 +78,11 @@ class SimManager(Node):
 
     def step(self):
         try:
-            # send state msg
             self.publish_ros_state()
-
             self.sim.step()
             self.sim.render()
-        except:
-            print()
+        except Exception as e:
+            self.get_logger().error(f"step error: {e}")
 
     def run(self):
         while self.is_running():
@@ -92,8 +90,11 @@ class SimManager(Node):
 
         self.sim.finalize()
 
-    def receive_ros_action(self, action):
-        pass
+    def receive_ros_action(self, msg: MotorCmds):
+        self.sim.receive_ros_action(msg)
+        # if len(msg.cmds) >= 16:
+        #     action = [msg.cmds[i].pos for i in range(16)]
+        #     self.sim.set_action(action)
 
     def _pub_pause_flag(self):
         # TODO : check

@@ -4,7 +4,8 @@
 
 #include <spdlog/spdlog.h>
 
-#include <unistd.h> // usleep
+#include <algorithm>
+#include <unistd.h>
 
 RSCANBusManager::RSCANBusManager()
     : CANBusManager()
@@ -13,28 +14,21 @@ RSCANBusManager::RSCANBusManager()
     type = CanType::RS;
 }
 
-void RSCANBusManager::writeState(uint16_t index, const rs_motor_fb_t& data_fb, const rs_data_read_write& data_motor)
+void RSCANBusManager::writeState(uint16_t /*index*/, const rs_motor_fb_t& data_fb, const rs_data_read_write& /*data_motor*/)
 {
     if (data_fb.id > 0 && data_fb.id <= data->motor_states.size())
     {
-        uint16_t index = motor_index_map[data_fb.id];
+        uint16_t motor_idx = motor_index_map[data_fb.id];
 
-        data->motors[index]->state.pos = data_fb.pos;
-        data->motors[index]->state.vel = data_fb.vel;
-        data->motors[index]->state.tau = data_fb.tau;
+        data->motors[motor_idx]->state.pos = data_fb.pos;
+        data->motors[motor_idx]->state.vel = data_fb.vel;
+        data->motors[motor_idx]->state.tau = data_fb.tau;
 
-        data->motors[index]->update();
+        data->motors[motor_idx]->update();
 
-        data->motor_states[data_fb.id - 1]->pos = data->motors[index]->state.pos;
-        data->motor_states[data_fb.id - 1]->vel = data->motors[index]->state.vel;
-        data->motor_states[data_fb.id - 1]->tau = data->motors[index]->state.tau;
-    
-        // spdlog::info("motor {} - {} - pos : {}, vel : {}", 
-        //     index,
-        //     data_fb.id,
-        //     data->motor_states[data_fb.id - 1]->pos,
-        //     data->motor_states[data_fb.id - 1]->vel
-        // );
+        data->motor_states[data_fb.id - 1]->pos = data->motors[motor_idx]->state.pos;
+        data->motor_states[data_fb.id - 1]->vel = data->motors[motor_idx]->state.vel;
+        data->motor_states[data_fb.id - 1]->tau = data->motors[motor_idx]->state.tau;
     }
     else
     {
@@ -100,8 +94,6 @@ void RSCANBusManager::disable()
     rs_motor_fb_t      data_fb;
     rs_data_read_write data_motor;
 
-    can_frame can_rx;
-
     for(auto index : motor_indices)
     {
         auto motor = data->motors[index];
@@ -129,35 +121,17 @@ void RSCANBusManager::step()
     rs_motor_fb_t      data_fb;
     rs_data_read_write data_motor;
 
-    can_frame can_rx;
-
     for(auto index : motor_indices)
     {
         auto motor = data->motors[index];
-        auto can = data->can_interfaces[motor->can_index];
-        // auto m_id  = motor_index_map[motor->id];
+        auto can   = data->can_interfaces[motor->can_index];
         auto cmd   = data->motor_cmds[motor->id - 1];
 
-        if (cmd->pos > RS_P_MAX)
-            cmd->pos = RS_P_MAX;
-        else if (cmd->pos < RS_P_MIN)
-            cmd->pos = RS_P_MIN;
-        if (cmd->vel > RS_V_MAX)
-            cmd->vel = RS_V_MAX;
-        else if (cmd->vel < RS_V_MIN)
-            cmd->vel = RS_V_MIN;
-        if (cmd->tau > RS_T_MAX)
-            cmd->tau = RS_T_MAX;
-        else if (cmd->tau < RS_T_MIN)
-            cmd->tau = RS_T_MIN;
-        if (cmd->kp > RS_KP_MAX)
-            cmd->kp = RS_KP_MAX;
-        else if (cmd->kp < RS_KP_MIN)
-            cmd->kp = RS_KP_MIN;
-        if (cmd->kd > RS_KD_MAX)
-            cmd->kd = RS_KD_MAX;
-        else if (cmd->kd < RS_KD_MIN)
-            cmd->kd = RS_KD_MIN;
+        cmd->pos = std::clamp(cmd->pos, static_cast<double>(RS_P_MIN),  static_cast<double>(RS_P_MAX));
+        cmd->vel = std::clamp(cmd->vel, static_cast<double>(RS_V_MIN),  static_cast<double>(RS_V_MAX));
+        cmd->tau = std::clamp(cmd->tau, static_cast<double>(RS_T_MIN),  static_cast<double>(RS_T_MAX));
+        cmd->kp  = std::clamp(cmd->kp,  static_cast<double>(RS_KP_MIN), static_cast<double>(RS_KP_MAX));
+        cmd->kd  = std::clamp(cmd->kd,  static_cast<double>(RS_KD_MIN), static_cast<double>(RS_KD_MAX));
 
         motor->setMixedControlInRad(
             cmd->pos, 

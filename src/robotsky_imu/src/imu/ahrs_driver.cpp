@@ -286,8 +286,8 @@ namespace FDILink
             uint16_t head_crc16_l = _imu_frame.frame.header.header_crc16_l;
             uint16_t head_crc16_h = _imu_frame.frame.header.header_crc16_h;
             uint16_t head_crc16   = head_crc16_l + (head_crc16_h << 8);
-            size_t   data_s       = _serial.read(_imu_frame.read_buf.read_msg, (IMU_LEN + 1)); // 48+1
-            uint16_t crc16        = CRC16_Table(_imu_frame.frame.data.data_buff, IMU_LEN);
+            _serial.read(_imu_frame.read_buf.read_msg, IMU_LEN + 1);
+            uint16_t crc16 = CRC16_Table(_imu_frame.frame.data.data_buff, IMU_LEN);
             if (_if_debug)
             {
                 std::cout << "CRC16:        " << std::hex << (int)crc16 << std::dec << std::endl;
@@ -314,8 +314,8 @@ namespace FDILink
             uint16_t head_crc16_l = _ahrs_frame.frame.header.header_crc16_l;
             uint16_t head_crc16_h = _ahrs_frame.frame.header.header_crc16_h;
             uint16_t head_crc16   = head_crc16_l + (head_crc16_h << 8);
-            size_t   data_s       = _serial.read(_ahrs_frame.read_buf.read_msg, (AHRS_LEN + 1)); // 48+1
-            uint16_t crc16        = CRC16_Table(_ahrs_frame.frame.data.data_buff, AHRS_LEN);
+            _serial.read(_ahrs_frame.read_buf.read_msg, AHRS_LEN + 1);
+            uint16_t crc16 = CRC16_Table(_ahrs_frame.frame.data.data_buff, AHRS_LEN);
             if (_if_debug)
             {
                 std::cout << "CRC16:        " << std::hex << (int)crc16 << std::dec << std::endl;
@@ -342,8 +342,8 @@ namespace FDILink
             uint16_t head_crc16_l = _insgps_frame.frame.header.header_crc16_l;
             uint16_t head_crc16_h = _insgps_frame.frame.header.header_crc16_h;
             uint16_t head_crc16   = head_crc16_l + (head_crc16_h << 8);
-            size_t   data_s       = _serial.read(_insgps_frame.read_buf.read_msg, (INSGPS_LEN + 1)); // 48+1
-            uint16_t crc16        = CRC16_Table(_insgps_frame.frame.data.data_buff, INSGPS_LEN);
+            _serial.read(_insgps_frame.read_buf.read_msg, INSGPS_LEN + 1);
+            uint16_t crc16 = CRC16_Table(_insgps_frame.frame.data.data_buff, INSGPS_LEN);
             if (_if_debug)
             {
                 std::cout << "CRC16:        " << std::hex << (int)crc16 << std::dec << std::endl;
@@ -370,8 +370,7 @@ namespace FDILink
             uint16_t head_crc16_l = _geodetic_position_frame.frame.header.header_crc16_l;
             uint16_t head_crc16_h = _geodetic_position_frame.frame.header.header_crc16_h;
             uint16_t head_crc16   = head_crc16_l + (head_crc16_h << 8);
-            size_t   data_s       = _serial.read(_geodetic_position_frame.read_buf.read_msg, (GEODETIC_POS_LEN + 1)); // 24+1
-
+            _serial.read(_geodetic_position_frame.read_buf.read_msg, GEODETIC_POS_LEN + 1);
             uint16_t CRC16 = CRC16_Table(_geodetic_position_frame.frame.data.data_buff, GEODETIC_POS_LEN);
             if (_if_debug)
             {
@@ -577,12 +576,12 @@ namespace FDILink
                 _ahrs_frame.frame.data.data_pack.Qy,
                 _ahrs_frame.frame.data.data_pack.Qz
             );
-            Eigen::Quaterniond q_r = Eigen::AngleAxisd(3.14159, Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(3.14159, Eigen::Vector3d::UnitY()) *
-                                     Eigen::AngleAxisd(0.00000, Eigen::Vector3d::UnitX());
-            Eigen::Quaterniond q_rr = Eigen::AngleAxisd(0.00000, Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(0.00000, Eigen::Vector3d::UnitY()) *
-                                      Eigen::AngleAxisd(3.14159, Eigen::Vector3d::UnitX());
-            Eigen::Quaterniond q_min_rr = Eigen::AngleAxisd(3.14159 / 2, Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(0.00000, Eigen::Vector3d::UnitY()) *
-                                          Eigen::AngleAxisd(3.14159, Eigen::Vector3d::UnitX());
+            Eigen::Quaterniond q_r = Eigen::AngleAxisd(PI, Eigen::Vector3d::UnitZ()) *
+                                     Eigen::AngleAxisd(PI, Eigen::Vector3d::UnitY()) *
+                                     Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitX());
+            Eigen::Quaterniond q_rr = Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitZ()) *
+                                      Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY()) *
+                                      Eigen::AngleAxisd(PI, Eigen::Vector3d::UnitX());
             if (_device_type == 0) // 未经变换的原始数据
             {
                 // std::cout << "device type: raw" << std::endl;
