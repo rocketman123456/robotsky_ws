@@ -71,6 +71,29 @@ MOTOR_TO_ISAAC_IDX = np.array([12, 4, 8, 0, 13, 5, 9, 1, 14, 6, 10, 2, 15, 7, 11
 # ---------------------------------------------------------------------------
 # RLControllerNode
 # ---------------------------------------------------------------------------
+# @staticmethod
+def quat_apply(quat_wxyz: np.ndarray, vec: np.ndarray) -> np.ndarray:
+    """Rotate vector by quaternion: v' = q * v * q^{-1}  (active rotation, body->world)."""
+    w, x, y, z = quat_wxyz
+    # t = 2 * cross(q_xyz, vec)
+    tx = 2.0 * (y * vec[2] - z * vec[1])
+    ty = 2.0 * (z * vec[0] - x * vec[2])
+    tz = 2.0 * (x * vec[1] - y * vec[0])
+    return np.array(
+        [
+            vec[0] + w * tx + (y * tz - z * ty),
+            vec[1] + w * ty + (z * tx - x * tz),
+            vec[2] + w * tz + (x * ty - y * tx),
+        ]
+    )
+
+
+# @staticmethod
+def quat_apply_inverse(quat_wxyz: np.ndarray, vec: np.ndarray) -> np.ndarray:
+    """Rotate vector by conjugate quaternion: v' = q^{-1} * v * q  (world->body)."""
+    w, x, y, z = quat_wxyz
+    # Conjugate: negate xyz
+    return quat_apply(np.array([w, -x, -y, -z]), vec)
 
 
 class RLControllerNode(Node):
@@ -107,7 +130,7 @@ class RLControllerNode(Node):
         self.declare_parameter("cpu_core", -1)
         self.declare_parameter("model_path", "")
         self.declare_parameter("action_scale", 0.25)
-        self.declare_parameter("wheel_action_scale", 4.0)
+        self.declare_parameter("wheel_action_scale", 2.5)
         # fmt:off
         self.declare_parameter("kp", [
             20.0, 20.0, 40.0, 0.0,
@@ -127,20 +150,20 @@ class RLControllerNode(Node):
         # Matches the init_state used by the IsaacLab training environment.
         # fmt:off
         self.declare_parameter("default_joint_pos", [
-                0.1, -0.5, 1.0, 0.0,  # RF
-                -0.1, -0.5, 1.0, 0.0,  # LF
-                0.1, 0.5, -1.0, 0.0,  # RB
-                -0.1, 0.5, -1.0, 0.0,  # LB
+                0.4, -0.5, 1.0, 0.0,  # RF
+                -0.4, -0.5, 1.0, 0.0,  # LF
+                0.4, 0.5, -1.0, 0.0,  # RB
+                -0.4, 0.5, -1.0, 0.0,  # LB
             ],
         )
         # fmt:on
         self.declare_parameter("default_joint_vel", [0.0] * NUM_JOINTS)
-        self.declare_parameter("obs_scale_ang_vel", 1.0)
+        self.declare_parameter("obs_scale_ang_vel", 0.5)  # 1.0
         self.declare_parameter("obs_scale_projected_gravity", 1.0)
         self.declare_parameter("obs_scale_commands", 1.0)
         self.declare_parameter("obs_scale_joint_pos", 1.0)
         # IsaacLab env: obs_scales.joint_vel = 1.0 for leg joints (wheel joints use obs_scales.wheel_vel = 0.1)
-        self.declare_parameter("obs_scale_joint_vel_leg", 1.0)
+        self.declare_parameter("obs_scale_joint_vel_leg", 0.1)  # 1.0
         self.declare_parameter("obs_scale_wheel_vel", 0.1)
         self.declare_parameter("obs_scale_actions", 1.0)
         # Some exported policies are trained with stacked actor observations:
@@ -228,15 +251,12 @@ class RLControllerNode(Node):
         # ----------------------------------------------------------------
         # ROS 2 subscribers & publisher
         # ----------------------------------------------------------------
-        qos_profile = QoSProfile(
-            depth=10,
-            reliability=ReliabilityPolicy.BEST_EFFORT
-        )
+        qos_profile = QoSProfile(depth=10, reliability=ReliabilityPolicy.BEST_EFFORT)
 
         self._sub_motors = self.create_subscription(MotorStates, "/motor_states", self._cb_motor_states, qos_profile)
         self._sub_imu = self.create_subscription(Imu, "/robotsky_imu", self._cb_imu, qos_profile)
         self._sub_cmd = self.create_subscription(Twist, "/cmd_vel", self._cb_cmd_vel, qos_profile)
-        self._pub_cmds = self.create_publisher(MotorCmds, "/motor_cmds", 10)  #qos_profile
+        self._pub_cmds = self.create_publisher(MotorCmds, "/motor_cmds", 10)  # qos_profile
         self._sub_pause = self.create_subscription(Bool, self.get_parameter("pause_topic").value, self._cb_pause_flag, 10)
 
         # ----------------------------------------------------------------
@@ -273,6 +293,8 @@ class RLControllerNode(Node):
     def _cb_cmd_vel(self, msg: Twist) -> None:
         with self._obs_lock:
             self._command[:] = [msg.linear.x, msg.linear.y, msg.angular.z]
+
+            print(f"command: {self._command}")
 
     # ------------------------------------------------------------------
     # Inference loop
@@ -396,30 +418,34 @@ class RLControllerNode(Node):
 
     @staticmethod
     def _compute_projected_gravity(quat_wxyz: np.ndarray) -> np.ndarray:
-        # Replicates IsaacLab's projected_gravity_b meaning: gravity vector expressed in body frame.
-        # Using world gravity [0, 0, -1] rotated into body frame via q^{-1} * g * q.
-        w, x, y, z = quat_wxyz.tolist()
-        # Rotation matrix from body->world for unit quaternion (w,x,y,z)
-        r00 = 1.0 - 2.0 * (y * y + z * z)
-        r01 = 2.0 * (x * y - z * w)
-        r02 = 2.0 * (x * z + y * w)
-        r10 = 2.0 * (x * y + z * w)
-        r11 = 1.0 - 2.0 * (x * x + z * z)
-        r12 = 2.0 * (y * z - x * w)
-        r20 = 2.0 * (x * z - y * w)
-        r21 = 2.0 * (y * z + x * w)
-        r22 = 1.0 - 2.0 * (x * x + y * y)
-        # world gravity
-        gw = np.array([0.0, 0.0, -1.0])
-        # body gravity = R^T * gw
-        gb = np.array(
-            [
-                r00 * gw[0] + r10 * gw[1] + r20 * gw[2],
-                r01 * gw[0] + r11 * gw[1] + r21 * gw[2],
-                r02 * gw[0] + r12 * gw[1] + r22 * gw[2],
-            ]
-        )
-        return gb
+        # # Replicates IsaacLab's projected_gravity_b meaning: gravity vector expressed in body frame.
+        # # Using world gravity [0, 0, -1] rotated into body frame via q^{-1} * g * q.
+        # w, x, y, z = quat_wxyz.tolist()
+        # # Rotation matrix from body->world for unit quaternion (w,x,y,z)
+        # r00 = 1.0 - 2.0 * (y * y + z * z)
+        # r01 = 2.0 * (x * y - z * w)
+        # r02 = 2.0 * (x * z + y * w)
+        # r10 = 2.0 * (x * y + z * w)
+        # r11 = 1.0 - 2.0 * (x * x + z * z)
+        # r12 = 2.0 * (y * z - x * w)
+        # r20 = 2.0 * (x * z - y * w)
+        # r21 = 2.0 * (y * z + x * w)
+        # r22 = 1.0 - 2.0 * (x * x + y * y)
+        # # world gravity
+        # gw = np.array([0.0, 0.0, -1.0])
+        # # body gravity = R^T * gw
+        # gb = np.array(
+        #     [
+        #         r00 * gw[0] + r10 * gw[1] + r20 * gw[2],
+        #         r01 * gw[0] + r11 * gw[1] + r21 * gw[2],
+        #         r02 * gw[0] + r12 * gw[1] + r22 * gw[2],
+        #     ]
+        # )
+        # return gb
+
+        """Project world gravity [0, 0, -1] into body frame via q^{-1}."""
+        g_world = np.array([0.0, 0.0, -1.0])
+        return quat_apply_inverse(quat_wxyz, g_world)
 
     # ------------------------------------------------------------------
     # CPU affinity
@@ -467,9 +493,7 @@ class RLControllerNode(Node):
 
         resolved = self._resolve_model_path(self._model_path)
         if resolved is None:
-            self.get_logger().warn(
-                f"Model not found for model_path='{self._model_path}'. Using random weights."
-            )
+            self.get_logger().warn(f"Model not found for model_path='{self._model_path}'. Using random weights.")
             return random_mlp()
 
         self.get_logger().info(f"Loading model from {resolved}")

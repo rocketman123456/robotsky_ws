@@ -38,10 +38,10 @@ class XboxCmdVelNode(Node):
         self.declare_parameter("deadzone", 0.12)
 
         # Typical xpad (Linux): 0=Lx, 1=Ly, 3=Rx, 4=Ry (2 is often LT analog)
-        self.declare_parameter("axis_left_x", 2)
-        self.declare_parameter("axis_left_y", 3)
-        self.declare_parameter("axis_right_x", 4)
-        self.declare_parameter("axis_right_y", 5)
+        self.declare_parameter("axis_left_x", 0)
+        self.declare_parameter("axis_left_y", 1)
+        self.declare_parameter("axis_right_x", 2)
+        self.declare_parameter("axis_right_y", 3)
 
         self.declare_parameter("invert_left_x", False)
         self.declare_parameter("invert_left_y", False)
