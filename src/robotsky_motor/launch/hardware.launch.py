@@ -21,7 +21,8 @@ def generate_launch_description():
             #     arguments=[urdf_path],
             # ),
             # Node(package="robotsky_motor", executable="robot_node", name="robot_node"),
-            Node(package="robotsky_motor", executable="motor_control_test", name="motor_control_test"),
+            # Node(package="robotsky_motor", executable="motor_control_test", name="motor_control_test"),
+            Node(package="robotsky_motor", executable="robot_control_node", name="robot_control_node"),
             Node(package="robotsky_imu", executable="imu_node", name="imu_node"),
         ]
     )

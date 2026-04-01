@@ -62,6 +62,16 @@ target_link_libraries(robot_node
   robotsky_motor_lib
 )
 
+add_executable(robot_control_node
+  src/robot_control_node.cpp
+)
+target_link_libraries(robot_control_node
+  ${catkin_LIBRARIES}
+  spdlog::spdlog
+  Eigen3::Eigen
+  robotsky_motor_lib
+)
+
 add_executable(motor_control_test
   src/test/motor_control_test.cpp
 )
@@ -124,6 +134,7 @@ target_link_libraries(motor_zero_test_dm
 
 install(TARGETS
   robot_node
+  robot_control_node
   motor_control_test_dm
   motor_control_test_rs
   motor_control_test
