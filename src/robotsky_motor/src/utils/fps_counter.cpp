@@ -2,53 +2,63 @@
 
 #include <spdlog/spdlog.h>
 
-#include <numeric>
+#include <algorithm>
 #include <cmath>
 
-FPSCounter::FPSCounter(bool print_info_)
+FPSCounter::FPSCounter(bool print_info_, std::string label, double report_interval_sec)
     : print_info(print_info_)
+    , _label(std::move(label))
+    , _report_interval_sec(report_interval_sec)
 {
-    _freqs.resize(_num_iterations);
-    _index = 0;
-    _count = 0;
 }
 
 void FPSCounter::start()
 {
-    _prev = Clock::now();
+    reset_window(Clock::now());
+    _has_prev = false;
+}
+
+void FPSCounter::reset_window(const TimePoint& now)
+{
+    _window_start = now;
+    _sample_count = 0;
+    _sum_freq     = 0.0;
+    _sum_sq_freq  = 0.0;
 }
 
 void FPSCounter::update()
 {
-    TimePoint now = Clock::now();
-    Duration  dt  = now - _prev;
-    _prev         = now;
-
-    double interval = dt.count();
-    if (interval > 0.0)
+    const TimePoint now = Clock::now();
+    if (!_has_prev)
     {
-        _freqs[_index % _num_iterations] = 1.0 / interval;
+        _prev     = now;
+        _has_prev = true;
+        return;
     }
 
-    _index++;
-    _count++;
+    const Duration dt       = now - _prev;
+    _prev                   = now;
 
-    if (_count % _num_iterations == 0)
+    const double interval = dt.count();
+    if (interval > 0.0)
     {
-        double sum  = std::accumulate(_freqs.begin(), _freqs.end(), 0.0);
-        double mean = sum / _num_iterations;
+        const double freq = 1.0 / interval;
+        _sum_freq += freq;
+        _sum_sq_freq += freq * freq;
+        ++_sample_count;
+    }
 
-        double sq_sum = 0.0;
-        for (double f : _freqs)
-        {
-            double diff = f - mean;
-            sq_sum += diff * diff;
-        }
-        double variance = sq_sum / _num_iterations;
+    const double elapsed = std::chrono::duration<double>(now - _window_start).count();
+    if (elapsed >= _report_interval_sec && _sample_count > 0)
+    {
+        const double mean     = _sum_freq / static_cast<double>(_sample_count);
+        const double variance = std::max(0.0, _sum_sq_freq / static_cast<double>(_sample_count) - mean * mean);
 
         if (print_info)
         {
-            spdlog::info("Average frequency: {:.1f} Hz, std: {:.2f} Hz", mean, std::sqrt(variance));
+            spdlog::info("{} frequency: mean {:.1f} Hz, std {:.2f} Hz ({} samples)", _label, mean, std::sqrt(variance), _sample_count);
         }
+
+        reset_window(now);
     }
 }

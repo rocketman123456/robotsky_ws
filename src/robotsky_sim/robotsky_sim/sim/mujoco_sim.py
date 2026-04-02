@@ -1,26 +1,26 @@
 from .sim_base import SimBase
-from .sim_config import *
+from .sim_config import RobotCfg, SceneCfg, SimulationCfg
 
-# import glfw
-# # Tell GLFW “yes, decorate windows” before MuJoCo calls its window‑creation code:
-# glfw.init()
-# glfw.window_hint(glfw.DECORATED, glfw.TRUE)
-
+import logging
 import numpy as np
 import threading
 import time
 import mujoco
 import mujoco.viewer
-from robotsky_interface.msg import MotorCmds, MotorStates, MotorCmd, MotorState
+from robotsky_interface.msg import MotorCmds
+
+LOGGER = logging.getLogger(__name__)
 
 
 class MujocoSim(SimBase):
     def __init__(self, sim_cfg: SimulationCfg):
         super().__init__(sim_cfg)
-        self.sim_cfg = sim_cfg
         self.timestep = self.sim_cfg.timestep
         self.pause_flag = True
-        self.ctrl = [0] * 16
+        self.ctrl = np.zeros(16, dtype=np.float64)
+        self.viewer = None
+        self.thread_view: threading.Thread | None = None
+        self.running = False
 
     def initialize(self, robot_cfg: RobotCfg, scene_cfg: SceneCfg):
         self.robot_cfg = robot_cfg
@@ -31,12 +31,9 @@ class MujocoSim(SimBase):
         self.model.opt.timestep = self.timestep
 
         total_mass = sum(self.model.body_mass)
-        print("total mass: ", total_mass)
+        LOGGER.info("MuJoCo model loaded with total mass %.3f kg", total_mass)
 
         self.key_id = self.model.key("home").id
-
-        self.viewer = None
-        self.running = False
 
         # TODO : set robot default position
         # if hasattr(robot_cfg, 'initial_qpos'):
@@ -47,6 +44,8 @@ class MujocoSim(SimBase):
         # Reset the simulation to the initial keyframe.
         mujoco.mj_resetDataKeyframe(self.model, self.data, self.key_id)
         mujoco.mj_forward(self.model, self.data)
+
+        self.running = True
 
         # Setup viewer if rendering is needed
         if not self.sim_cfg.headless:
@@ -65,21 +64,21 @@ class MujocoSim(SimBase):
             self.viewer.cam.trackbodyid = self.model.body("base_link").id
             self.viewer.sync()
 
-        self.thread_view = threading.Thread(target=self._sync_loop)
-        self.thread_view.start()
-
-        self.running = True
+            self.thread_view = threading.Thread(target=self._sync_loop, daemon=True)
+            self.thread_view.start()
 
     def finalize(self):
+        self.running = False
         if self.viewer is not None:
             self.viewer.close()
             self.viewer = None
-        self.thread_view.join()
-        self.running = False
+        if self.thread_view is not None:
+            self.thread_view.join(timeout=1.0)
+            self.thread_view = None
 
     def reset(self):
-        # TODO
-        pass
+        mujoco.mj_resetDataKeyframe(self.model, self.data, self.key_id)
+        mujoco.mj_forward(self.model, self.data)
 
     def is_running(self):
         if self.viewer is not None:
@@ -112,10 +111,18 @@ class MujocoSim(SimBase):
             acc  = self.data.sensor("BodyAcc").data.copy()
             return qp, qv, quat, gyro, acc
         except Exception as e:
-            print(f"[MujocoSim] get_state error: {e}")
-            return [], [], [], [], []
-    
+            LOGGER.warning("Failed to read MuJoCo state: %s", e)
+            return (
+                np.zeros(16, dtype=np.float64),
+                np.zeros(16, dtype=np.float64),
+                np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float64),
+                np.zeros(3, dtype=np.float64),
+                np.zeros(3, dtype=np.float64),
+            )
+
     def receive_ros_action(self, msg: MotorCmds):
+        if len(msg.cmds) < 16:
+            return
         action = [msg.cmds[i].pos for i in range(16)]
         action[3] = msg.cmds[3].vel
         action[7] = msg.cmds[7].vel
@@ -124,20 +131,22 @@ class MujocoSim(SimBase):
         self.set_action(action)
 
     def set_action(self, action):
-        self._control_callback(action)
+        action_array = np.asarray(action, dtype=np.float64).reshape(-1)
+        if action_array.shape[0] != 16:
+            raise ValueError(f"Expected 16 control values, got {action_array.shape[0]}")
+        self._control_callback(action_array)
 
     def _sync_loop(self):
-        if self.viewer is not None:
-            while self.viewer.is_running():
+        while self.running and self.viewer is not None and self.viewer.is_running():
+            try:
                 self.viewer.sync()
-                time.sleep(0.010)
-        else:
-            while self.running:
-                time.sleep(0.010)
+            except Exception as e:
+                LOGGER.warning("MuJoCo viewer sync failed: %s", e)
+                break
+            time.sleep(0.010)
 
     def _control_callback(self, action):
-        for i in range(16):
-            self.ctrl[i] = action[i]
+        self.ctrl[:] = action
         self.data.ctrl[:] = self.ctrl
 
     def _key_callback(self, keycode):
@@ -146,4 +155,4 @@ class MujocoSim(SimBase):
                 if chr(keycode) == " ":
                     self.pause_flag = not self.pause_flag
         except Exception as e:
-            print(f"[MujocoSim] key_callback error: {e}")
+            LOGGER.warning("MuJoCo key callback failed: %s", e)

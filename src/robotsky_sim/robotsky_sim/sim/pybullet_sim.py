@@ -1,24 +1,25 @@
 from .sim_base import SimBase
-from .sim_config import *
+from .sim_config import RobotCfg, SceneCfg, SimulationCfg
 
 import numpy as np
 import pybullet
 import pybullet_data
-import time
 
 
 class PybulletSim(SimBase):
     def __init__(self, sim_cfg: SimulationCfg):
         super().__init__(sim_cfg)
+        self.sim_cfg = sim_cfg
         if sim_cfg.headless:
             self.physicsClient = pybullet.connect(pybullet.DIRECT)
         else:
             self.physicsClient = pybullet.connect(pybullet.GUI)
+        self.num_joints = 0
 
     def initialize(self, robot_cfg: RobotCfg, scene_cfg: SceneCfg):
         pybullet.setAdditionalSearchPath(pybullet_data.getDataPath())
         pybullet.setGravity(0, 0, -9.81)
-        pybullet.setTimeStep(1./500.)  # finer integration
+        pybullet.setTimeStep(self.sim_cfg.timestep)
         pybullet.setPhysicsEngineParameter(numSolverIterations=100)  # more solver loops
 
         # Load the robot model
@@ -55,7 +56,27 @@ class PybulletSim(SimBase):
         pass
 
     def get_state(self):
-        pass
+        if self.num_joints <= 0:
+            return (
+                np.zeros(16, dtype=np.float64),
+                np.zeros(16, dtype=np.float64),
+                np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float64),
+                np.zeros(3, dtype=np.float64),
+                np.zeros(3, dtype=np.float64),
+            )
+
+        joint_states = pybullet.getJointStates(self.robot_id, list(range(self.num_joints)))
+        qp = np.zeros(16, dtype=np.float64)
+        qv = np.zeros(16, dtype=np.float64)
+        for i, state in enumerate(joint_states[:16]):
+            qp[i] = state[0]
+            qv[i] = state[1]
+
+        _, quat_xyzw = pybullet.getBasePositionAndOrientation(self.robot_id)
+        quat = np.array([quat_xyzw[3], quat_xyzw[0], quat_xyzw[1], quat_xyzw[2]], dtype=np.float64)
+        gyro = np.array(pybullet.getBaseVelocity(self.robot_id)[1], dtype=np.float64)
+        acc = np.zeros(3, dtype=np.float64)
+        return qp, qv, quat, gyro, acc
 
     def set_action(self, action):
         # position control

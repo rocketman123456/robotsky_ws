@@ -5,9 +5,7 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-    ld = LaunchDescription()
-
-    rviz_path = FindPackageShare("srobot_hardware")
+    rviz_path = FindPackageShare("robotsky_imu")
     default_rviz_config_path = PathJoinSubstitution([rviz_path, "rviz", "imu.rviz"])
 
     return LaunchDescription(

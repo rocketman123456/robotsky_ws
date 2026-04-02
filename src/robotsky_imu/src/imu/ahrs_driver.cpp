@@ -172,7 +172,7 @@ namespace FDILink
         uint8_t check_sn[1]     = {0xff};
         size_t  sn_s            = _serial.read(check_sn, 1);
         uint8_t head_crc8[1]    = {0xff};
-        size_t  crc8_s          = _serial.read(head_crc8, 1);
+        _serial.read(head_crc8, 1);
         uint8_t head_crc16_H[1] = {0xff};
         uint8_t head_crc16_L[1] = {0xff};
         size_t  crc16_H_s       = _serial.read(head_crc16_H, 1);

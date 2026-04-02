@@ -15,9 +15,12 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/MotorCmds.msg"
   "msg/MotorState.msg"
   "msg/MotorStates.msg"
+  "msg/RobotStatus.msg"
   "srv/Robot.srv"
   DEPENDENCIES std_msgs # Add packages that above messages depend on, in this case geometry_msgs for Sphere.msg
 )
+
+ament_export_dependencies(rosidl_default_runtime)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

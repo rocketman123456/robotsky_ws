@@ -24,6 +24,11 @@ add_library(robotsky_imu_lib
   src/imu/ahrs_driver.cpp
   src/imu/crc_table.cpp
 )
+target_include_directories(robotsky_imu_lib
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+    $<INSTALL_INTERFACE:include>
+)
 target_link_libraries(robotsky_imu_lib
   spdlog::spdlog
   Eigen3::Eigen
@@ -54,14 +59,23 @@ ament_target_dependencies(imu_node
   serial
 )
 
+install(TARGETS
+  robotsky_imu_lib
+  imu_node
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
+install(
+  DIRECTORY src/imu/
+  DESTINATION include/imu
+  FILES_MATCHING PATTERN "*.h"
+)
+
 install(
   DIRECTORY launch rviz
   DESTINATION share/${PROJECT_NAME}/
-)
-
-install(TARGETS
-  imu_node
-  DESTINATION lib/${PROJECT_NAME}
 )
 
 # uncomment the following section in order to fill in

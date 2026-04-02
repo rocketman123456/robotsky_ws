@@ -6,10 +6,18 @@ from dataclasses import dataclass, field
 @dataclass
 class SimulationCfg:
     headless: bool = False
-    simulatior_type: str = "mujoco"
+    simulator_type: str = "mujoco"
     timestep: float = 0.002
     framewidth: int = 1600
     frameheight: int = 900
+
+    @property
+    def simulatior_type(self) -> str:
+        return self.simulator_type
+
+    @simulatior_type.setter
+    def simulatior_type(self, value: str) -> None:
+        self.simulator_type = value
 
 
 @dataclass

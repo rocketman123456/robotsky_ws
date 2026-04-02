@@ -14,11 +14,11 @@ setup(
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
     ],
-    install_requires=["setuptools"],
+    install_requires=["setuptools", "numpy"],
     zip_safe=True,
     maintainer="rocketsky",
     maintainer_email="759094438@qq.com",
-    description="TODO: Package description",
+    description="Simulation bridge for RobotSky using MuJoCo and other backends",
     license="Apache-2.0",
     entry_points={
         "console_scripts": [

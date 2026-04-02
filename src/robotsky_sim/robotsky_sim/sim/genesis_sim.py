@@ -1,5 +1,5 @@
 from .sim_base import SimBase
-from .sim_config import *
+from .sim_config import RobotCfg, SceneCfg, SimulationCfg
 
 import numpy as np
 import genesis as gs
@@ -13,7 +13,6 @@ import genesis as gs
 class GenesisSim(SimBase):
     def __init__(self, sim_cfg: SimulationCfg):
         super().__init__(sim_cfg)
-        self.sim_cfg = sim_cfg
         self.timestep = self.sim_cfg.timestep
         self.pause_flag = True
         self.ctrl = [0] * 16
@@ -36,10 +35,10 @@ class GenesisSim(SimBase):
 
         self.scene = gs.Scene(
             sim_options=gs.options.SimOptions(
-                dt=0.002,
+                dt=self.timestep,
                 gravity=(0, 0, -9.81),
             ),
-            show_viewer=True,
+            show_viewer=not self.sim_cfg.headless,
             viewer_options=gs.options.ViewerOptions(
                 camera_pos=(3.5, 0.0, 2.5),
                 camera_lookat=(0.0, 0.0, 0.5),

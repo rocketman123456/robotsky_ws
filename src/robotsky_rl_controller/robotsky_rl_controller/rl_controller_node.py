@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import os
 import threading
 import time
@@ -56,6 +57,8 @@ OBS_JVEL = 16
 OBS_PREV_ACT = 16
 OBS_DIM = OBS_ANG_VEL + OBS_GRAVITY + OBS_CMD + OBS_JPOS + OBS_JVEL + OBS_PREV_ACT  # 57
 ACTION_DIM = NUM_JOINTS
+WORLD_GRAVITY = np.array([0.0, 0.0, -1.0], dtype=np.float32)
+IDENTITY_QUAT = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float32)
 
 # Joint order mapping between:
 # - IsaacLab/policy order (used by obs/action tensors)
@@ -84,7 +87,8 @@ def quat_apply(quat_wxyz: np.ndarray, vec: np.ndarray) -> np.ndarray:
             vec[0] + w * tx + (y * tz - z * ty),
             vec[1] + w * ty + (z * tx - x * tz),
             vec[2] + w * tz + (x * ty - y * tx),
-        ]
+        ],
+        dtype=np.float32,
     )
 
 
@@ -93,7 +97,57 @@ def quat_apply_inverse(quat_wxyz: np.ndarray, vec: np.ndarray) -> np.ndarray:
     """Rotate vector by conjugate quaternion: v' = q^{-1} * v * q  (world->body)."""
     w, x, y, z = quat_wxyz
     # Conjugate: negate xyz
-    return quat_apply(np.array([w, -x, -y, -z]), vec)
+    return quat_apply(np.array([w, -x, -y, -z], dtype=np.float32), vec)
+
+
+class FrequencyCounter:
+    """Track loop frequency and report mean/std once per second."""
+
+    def __init__(self, logger, label: str, report_interval_sec: float = 1.0) -> None:
+        self._logger = logger
+        self._label = label
+        self._report_interval_sec = report_interval_sec
+        self._prev_time: Optional[float] = None
+        self._window_start: Optional[float] = None
+        self._sample_count = 0
+        self._sum_freq = 0.0
+        self._sum_sq_freq = 0.0
+
+    def start(self) -> None:
+        self._prev_time = None
+        self._window_start = time.monotonic()
+        self._sample_count = 0
+        self._sum_freq = 0.0
+        self._sum_sq_freq = 0.0
+
+    def update(self) -> None:
+        now = time.monotonic()
+        if self._prev_time is None:
+            self._prev_time = now
+            self._window_start = now
+            return
+
+        dt = now - self._prev_time
+        self._prev_time = now
+
+        if dt > 0.0:
+            freq = 1.0 / dt
+            self._sum_freq += freq
+            self._sum_sq_freq += freq * freq
+            self._sample_count += 1
+
+        if self._window_start is None:
+            self._window_start = now
+
+        elapsed = now - self._window_start
+        if elapsed >= self._report_interval_sec and self._sample_count > 0:
+            mean = self._sum_freq / self._sample_count
+            variance = max(0.0, self._sum_sq_freq / self._sample_count - mean * mean)
+            self._logger.info(f"{self._label} frequency: mean {mean:.1f} Hz, std {math.sqrt(variance):.2f} Hz ({self._sample_count} samples)")
+            self._window_start = now
+            self._sample_count = 0
+            self._sum_freq = 0.0
+            self._sum_sq_freq = 0.0
 
 
 class RLControllerNode(Node):
@@ -131,31 +185,33 @@ class RLControllerNode(Node):
         self.declare_parameter("model_path", "")
         self.declare_parameter("action_scale", 0.25)
         self.declare_parameter("wheel_action_scale", 2.5)
+        default_kp = [
+            20.0, 20.0, 40.0, 0.0,
+            20.0, 20.0, 40.0, 0.0,
+            20.0, 20.0, 40.0, 0.0,
+            20.0, 20.0, 40.0, 0.0,
+        ]
+        default_kd = [
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+        ]
+        default_joint_pos = [
+            0.4, -0.5, 1.0, 0.0,  # RF
+            -0.4, -0.5, 1.0, 0.0,  # LF
+            0.4, 0.5, -1.0, 0.0,  # RB
+            -0.4, 0.5, -1.0, 0.0,  # LB
+        ]
         # fmt:off
-        self.declare_parameter("kp", [
-            20.0, 20.0, 40.0, 0.0,
-            20.0, 20.0, 40.0, 0.0,
-            20.0, 20.0, 40.0, 0.0,
-            20.0, 20.0, 40.0, 0.0,
-        ])
-        self.declare_parameter("kd", [
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-        ])
+        self.declare_parameter("kp", default_kp)
+        self.declare_parameter("kd", default_kd)
         # fmt:on
         self.declare_parameter("wheel_joint_indices", [3, 7, 11, 15])
         # Default joint positions in *motor* (MotorStates) index order.
         # Matches the init_state used by the IsaacLab training environment.
         # fmt:off
-        self.declare_parameter("default_joint_pos", [
-                0.4, -0.5, 1.0, 0.0,  # RF
-                -0.4, -0.5, 1.0, 0.0,  # LF
-                0.4, 0.5, -1.0, 0.0,  # RB
-                -0.4, 0.5, -1.0, 0.0,  # LB
-            ],
-        )
+        self.declare_parameter("default_joint_pos", default_joint_pos)
         # fmt:on
         self.declare_parameter("default_joint_vel", [0.0] * NUM_JOINTS)
         self.declare_parameter("obs_scale_ang_vel", 0.5)  # 1.0
@@ -171,6 +227,10 @@ class RLControllerNode(Node):
         self.declare_parameter("obs_history_len", 10)
         self.declare_parameter("clip_observations", 100.0)
         self.declare_parameter("clip_actions", 100.0)
+        self.declare_parameter("motor_states_topic", "/motor_states")
+        self.declare_parameter("imu_topic", "/robotsky_imu")
+        self.declare_parameter("cmd_vel_topic", "/cmd_vel")
+        self.declare_parameter("motor_cmds_topic", "/motor_cmds")
         self.declare_parameter("pause_topic", "/pause_flag")
         # When true, controller will stop rolling obs_history and will not publish MotorCmds.
         self.declare_parameter("pause_initial", True)
@@ -178,10 +238,15 @@ class RLControllerNode(Node):
         self._freq = self.get_parameter("control_frequency").value
         self._cpu_core = self.get_parameter("cpu_core").value
         self._model_path = self.get_parameter("model_path").value
-        self._kp = self.get_parameter("kp").value
-        self._kd = self.get_parameter("kd").value
+        self._kp = self._read_vector_parameter("kp", default_kp)
+        self._kd = self._read_vector_parameter("kd", default_kd)
         self._action_scale = float(self.get_parameter("action_scale").value)
         self._wheel_action_scale = float(self.get_parameter("wheel_action_scale").value)
+        self._motor_states_topic = self.get_parameter("motor_states_topic").value
+        self._imu_topic = self.get_parameter("imu_topic").value
+        self._cmd_vel_topic = self.get_parameter("cmd_vel_topic").value
+        self._motor_cmds_topic = self.get_parameter("motor_cmds_topic").value
+        self._pause_topic = self.get_parameter("pause_topic").value
 
         wheel_indices = list(self.get_parameter("wheel_joint_indices").value)
         self._wheel_joint_ids = [int(i) for i in wheel_indices]
@@ -193,14 +258,8 @@ class RLControllerNode(Node):
         self._wheel_joint_ids_isaac = [isaac_idx for isaac_idx in range(NUM_JOINTS) if int(MOTOR_TO_ISAAC_IDX[isaac_idx]) in self._wheel_joint_ids]
         self._leg_joint_ids_isaac = [i for i in range(NUM_JOINTS) if i not in self._wheel_joint_ids_isaac]
 
-        self._default_joint_pos = np.array(self.get_parameter("default_joint_pos").value, dtype=np.float64)
-        self._default_joint_vel = np.array(self.get_parameter("default_joint_vel").value, dtype=np.float64)
-        if self._default_joint_pos.shape[0] != NUM_JOINTS:
-            self.get_logger().warn("default_joint_pos length != 16, using zeros")
-            self._default_joint_pos = np.zeros(NUM_JOINTS, dtype=np.float64)
-        if self._default_joint_vel.shape[0] != NUM_JOINTS:
-            self.get_logger().warn("default_joint_vel length != 16, using zeros")
-            self._default_joint_vel = np.zeros(NUM_JOINTS, dtype=np.float64)
+        self._default_joint_pos = self._read_vector_parameter("default_joint_pos", default_joint_pos)
+        self._default_joint_vel = self._read_vector_parameter("default_joint_vel", [0.0] * NUM_JOINTS)
 
         self._obs_scale_ang_vel = float(self.get_parameter("obs_scale_ang_vel").value)
         self._obs_scale_projected_gravity = float(self.get_parameter("obs_scale_projected_gravity").value)
@@ -231,14 +290,14 @@ class RLControllerNode(Node):
         # Observation state (protected by _obs_lock)
         # ----------------------------------------------------------------
         self._obs_lock = threading.Lock()
-        self._quat = np.array([1.0, 0.0, 0.0, 0.0])  # w, x, y, z
-        self._ang_vel = np.zeros(3)
-        self._projected_gravity = np.array([0.0, 0.0, -1.0])
-        self._command = np.zeros(3)  # vx, vy, yaw_rate
-        self._joint_pos = np.zeros(NUM_JOINTS)
-        self._joint_vel = np.zeros(NUM_JOINTS)
-        self._prev_action = np.zeros(ACTION_DIM)
-        self._obs_history = np.zeros((self._obs_history_len, OBS_DIM), dtype=np.float64)
+        self._quat = IDENTITY_QUAT.copy()  # w, x, y, z
+        self._ang_vel = np.zeros(3, dtype=np.float32)
+        self._projected_gravity = WORLD_GRAVITY.copy()
+        self._command = np.zeros(3, dtype=np.float32)  # vx, vy, yaw_rate
+        self._joint_pos = np.zeros(NUM_JOINTS, dtype=np.float32)
+        self._joint_vel = np.zeros(NUM_JOINTS, dtype=np.float32)
+        self._prev_action = np.zeros(ACTION_DIM, dtype=np.float32)
+        self._obs_history = np.zeros((self._obs_history_len, OBS_DIM), dtype=np.float32)
         self._has_imu = False
         self._has_motors = False
 
@@ -253,20 +312,31 @@ class RLControllerNode(Node):
         # ----------------------------------------------------------------
         qos_profile = QoSProfile(depth=10, reliability=ReliabilityPolicy.BEST_EFFORT)
 
-        self._sub_motors = self.create_subscription(MotorStates, "/motor_states", self._cb_motor_states, qos_profile)
-        self._sub_imu = self.create_subscription(Imu, "/robotsky_imu", self._cb_imu, qos_profile)
-        self._sub_cmd = self.create_subscription(Twist, "/cmd_vel", self._cb_cmd_vel, qos_profile)
-        self._pub_cmds = self.create_publisher(MotorCmds, "/motor_cmds", 10)  # qos_profile
-        self._sub_pause = self.create_subscription(Bool, self.get_parameter("pause_topic").value, self._cb_pause_flag, 10)
+        self._sub_motors = self.create_subscription(MotorStates, self._motor_states_topic, self._cb_motor_states, qos_profile)
+        self._sub_imu = self.create_subscription(Imu, self._imu_topic, self._cb_imu, qos_profile)
+        self._sub_cmd = self.create_subscription(Twist, self._cmd_vel_topic, self._cb_cmd_vel, qos_profile)
+        self._pub_cmds = self.create_publisher(MotorCmds, self._motor_cmds_topic, 10)
+        self._sub_pause = self.create_subscription(Bool, self._pause_topic, self._cb_pause_flag, 10)
 
         # ----------------------------------------------------------------
         # Inference thread (fixed-rate, separate from ROS spin thread)
         # ----------------------------------------------------------------
+        self._frequency_counter = FrequencyCounter(self.get_logger(), "rl_controller")
+        self._frequency_counter.start()
         self._running = True
         self._inference_thread = threading.Thread(target=self._inference_loop, daemon=True)
         self._inference_thread.start()
 
         self.get_logger().info("RLControllerNode started.")
+
+    def _read_vector_parameter(self, name: str, default_values: List[float]) -> np.ndarray:
+        values = [float(v) for v in self.get_parameter(name).value]
+        if len(values) != len(default_values):
+            self.get_logger().warn(
+                f"{name} length={len(values)} does not match expected {len(default_values)}, using defaults"
+            )
+            values = list(default_values)
+        return np.asarray(values, dtype=np.float32)
 
     # ------------------------------------------------------------------
     # Subscriber callbacks
@@ -284,7 +354,13 @@ class RLControllerNode(Node):
     def _cb_imu(self, msg: Imu) -> None:
         with self._obs_lock:
             o = msg.orientation
-            self._quat[:] = [o.w, o.x, o.y, o.z]
+            quat = np.asarray([o.w, o.x, o.y, o.z], dtype=np.float32)
+            quat_norm = float(np.linalg.norm(quat))
+            if quat_norm > 1e-6:
+                quat /= quat_norm
+            else:
+                quat = IDENTITY_QUAT.copy()
+            self._quat[:] = quat
             av = msg.angular_velocity
             self._ang_vel[:] = [av.x, av.y, av.z]
             self._projected_gravity[:] = self._compute_projected_gravity(self._quat)
@@ -293,8 +369,7 @@ class RLControllerNode(Node):
     def _cb_cmd_vel(self, msg: Twist) -> None:
         with self._obs_lock:
             self._command[:] = [msg.linear.x, msg.linear.y, msg.angular.z]
-
-            print(f"command: {self._command}")
+            # print(f"command: {self._command}")
 
     # ------------------------------------------------------------------
     # Inference loop
@@ -309,6 +384,7 @@ class RLControllerNode(Node):
 
         while self._running:
             self._step()
+            self._frequency_counter.update()
 
             now = time.monotonic()
             sleep_time = next_time - now
@@ -328,13 +404,15 @@ class RLControllerNode(Node):
                 return
             base_obs = self._build_obs()
             # actor_obs stacking (most recent frame at the end)
-            self._obs_history = np.roll(self._obs_history, -1, axis=0)
+            if self._obs_history_len > 1:
+                self._obs_history[:-1, :] = self._obs_history[1:, :]
             self._obs_history[-1, :] = base_obs
             obs = self._obs_history.reshape(-1).copy()
 
         action_isaac = self._policy.forward(obs)  # (action_dim,) in policy order
         if self._clip_actions > 0.0:
             action_isaac = np.clip(action_isaac, -self._clip_actions, self._clip_actions)
+        action_isaac = np.asarray(action_isaac, dtype=np.float32)
 
         action_mujoco = action_isaac[ISAAC_TO_MOTOR_IDX]
 
@@ -345,10 +423,6 @@ class RLControllerNode(Node):
             if self._paused:
                 return
             self._prev_action[:] = action_isaac
-
-        with self._obs_lock:
-            if self._paused:
-                return
 
         # self.get_logger().info(f"Action (mujoco): {action_mujoco}")
         self._publish_action(action_mujoco)
@@ -376,7 +450,7 @@ class RLControllerNode(Node):
                 joint_vel_isaac,  # 16
                 self._prev_action * self._obs_scale_actions,  # 16
             ]
-        )  # total: 57
+        ).astype(np.float32, copy=False)  # total: 57
 
         if self._clip_observations > 0.0:
             base_obs = np.clip(base_obs, -self._clip_observations, self._clip_observations)
@@ -444,8 +518,7 @@ class RLControllerNode(Node):
         # return gb
 
         """Project world gravity [0, 0, -1] into body frame via q^{-1}."""
-        g_world = np.array([0.0, 0.0, -1.0])
-        return quat_apply_inverse(quat_wxyz, g_world)
+        return quat_apply_inverse(quat_wxyz, WORLD_GRAVITY)
 
     # ------------------------------------------------------------------
     # CPU affinity
@@ -527,15 +600,18 @@ class RLControllerNode(Node):
             candidates.append(p)
         else:
             candidates.append(Path.cwd() / p)
+            candidates.append(Path.cwd() / "model" / p.name)
             try:
                 share = Path(get_package_share_directory("robotsky_rl_controller"))
                 candidates.append(share / p)
+                candidates.append(share / "model" / p.name)
             except Exception:
                 pass
             try:
                 # .../robotsky_rl_controller/rl_controller_node.py -> package dir -> src root
                 src_root = Path(__file__).resolve().parents[2]
                 candidates.append(src_root / p)
+                candidates.append(src_root / "model" / p.name)
             except Exception:
                 pass
 

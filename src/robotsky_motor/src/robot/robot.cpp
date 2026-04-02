@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <functional>
 
+#include <spdlog/spdlog.h>
+
 Robot::Robot()
     : Node("robotsky_motor")
 {
@@ -36,10 +38,22 @@ void Robot::initCANBus(const std::vector<CanBusInitInfo>& bus_infos)
 
 void Robot::initMotors(const std::vector<MotorInitInfo>& motor_infos)
 {
-    for (size_t i = 0; i < motor_infos.size(); ++i)
+    const auto now = std::chrono::steady_clock::now();
+
+    data->motor_states.reserve(data->motor_states.size() + motor_infos.size());
+    data->motor_cmds.reserve(data->motor_cmds.size() + motor_infos.size());
+
+    for (const auto& info : motor_infos)
     {
-        data->motor_states.push_back(std::make_shared<MotorState>());
-        data->motor_cmds.push_back(std::make_shared<MotorCmd>());
+        auto motor_state       = std::make_shared<MotorState>();
+        motor_state->mode      = info.mode;
+        motor_state->last_rx_time = now;
+        data->motor_states.push_back(motor_state);
+
+        auto motor_cmd       = std::make_shared<MotorCmd>();
+        motor_cmd->mode      = info.mode;
+        motor_cmd->last_tx_time = now;
+        data->motor_cmds.push_back(motor_cmd);
     }
 
     for (const auto& info : motor_infos)
@@ -76,14 +90,18 @@ void Robot::onMotorCmds(const robotsky_interface::msg::MotorCmds::SharedPtr msg)
     }
 
     const std::size_t n = std::min<std::size_t>(motor_count_, msg->cmds.size());
+    const auto        now = std::chrono::steady_clock::now();
     for (std::size_t i = 0; i < n; ++i)
     {
         auto& mc = data->motor_cmds[i];
+        // std::lock_guard<std::mutex> lock(mc->mutex);
         mc->pos = msg->cmds[i].pos;
         mc->vel = msg->cmds[i].vel;
         mc->tau = msg->cmds[i].tau;
         mc->kp  = msg->cmds[i].kp;
         mc->kd  = msg->cmds[i].kd;
+        mc->last_tx_time = now;
+        mc->health       = MotorHealth::OK;
     }
 }
 
@@ -148,6 +166,12 @@ void Robot::mainLoop()
 
 void Robot::updateFromCAN(int motorId, double pos, double vel, double torque)
 {
+    if (motorId < 0 || static_cast<std::size_t>(motorId) >= data->motor_states.size())
+    {
+        spdlog::error("motorId out of range: {}", motorId);
+        return;
+    }
+
     auto& motor = data->motor_states[motorId];
 
     std::lock_guard<std::mutex> lock(motor->mutex);
@@ -160,6 +184,12 @@ void Robot::updateFromCAN(int motorId, double pos, double vel, double torque)
 
 void Robot::updateExternalCommand(int motorId, MotorMode mode)
 {
+    if (motorId < 0 || static_cast<std::size_t>(motorId) >= data->motor_cmds.size())
+    {
+        spdlog::error("motorId out of range: {}", motorId);
+        return;
+    }
+
     auto& motor = data->motor_cmds[motorId];
 
     std::lock_guard<std::mutex> lock(motor->mutex);

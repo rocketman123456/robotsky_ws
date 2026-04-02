@@ -1,37 +1,32 @@
-from ament_index_python.packages import get_package_share_directory
 import os
 
-from .sim import *
+import rclpy
+from ament_index_python.packages import get_package_share_directory
+
+from .sim import RobotCfg, SceneCfg, SimulationCfg
 from .sim_manager import SimManager
 
-import rclpy
-from rclpy.node import Node
-from ament_index_python.packages import get_package_share_directory
-from std_msgs.msg import Bool
-from sensor_msgs.msg import JointState, Imu
-from robotsky_interface.msg import MotorCmds, MotorStates, MotorCmd, MotorState
+
+def _resolve_robot_asset_path(simulator_type: str) -> str:
+    pkg_share = get_package_share_directory("robotsky_description")
+    asset_dir = "mjcf" if simulator_type == "mujoco" else "urdf"
+    asset_name = "robotsky_wq.xml" if simulator_type == "mujoco" else "robotsky_wq.urdf"
+    return os.path.join(pkg_share, asset_dir, asset_name)
 
 def main(args=None):
     rclpy.init(args=args)
 
-    # Create an instance of the RobotSkySim class
     sim_cfg = SimulationCfg()
-    # sim_cfg.simulatior_type = "pybullet"
-    sim_cfg.simulatior_type = "mujoco"
-    # sim_cfg.simulatior_type = "genesis"
+    sim_cfg.simulator_type = os.environ.get("ROBOTSKY_SIMULATOR", sim_cfg.simulator_type)
 
-    pkg_share = get_package_share_directory('robotsky_description')
-    urdf_path = os.path.join(pkg_share, 'urdf', 'robotsky_wq.urdf')
-    mjcf_path = os.path.join(pkg_share, 'mjcf', 'robotsky_wq.xml')
-    print(f"URDF is at: {urdf_path}")
-    print(f"MJCF is at: {mjcf_path}")
     robot_cfg = RobotCfg()
-    robot_cfg.robot_asset_path = mjcf_path
-    # robot_cfg.robot_asset_path = urdf_path
-
+    robot_cfg.robot_asset_path = _resolve_robot_asset_path(sim_cfg.simulator_type)
     scene_cfg = SceneCfg()
 
-    sim = SimManager(sim_cfg = sim_cfg, robot_cfg = robot_cfg, scene_cfg = scene_cfg)
+    sim = SimManager(sim_cfg=sim_cfg, robot_cfg=robot_cfg, scene_cfg=scene_cfg)
+    sim.get_logger().info(
+        f"Robot simulator started with backend '{sim_cfg.simulator_type}' using asset '{robot_cfg.robot_asset_path}'"
+    )
 
     action = [
         0.0, -0.5, 1.0, 0.0, #
@@ -39,18 +34,19 @@ def main(args=None):
         0.0, 0.5, -1.0, 0.0, #
         0.0, 0.5, -1.0, 0.0, #
     ]
-    # state = sim.get_state()
     sim.set_action(action)
 
-    # Run the simulation
     try:
         rclpy.spin(sim)
-    except:
-            print()
-
-    sim.sim.finalize()
-    
-    rclpy.shutdown()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        sim.sim.finalize()
+        sim.destroy_node()
+        try:
+            rclpy.shutdown()
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     main()

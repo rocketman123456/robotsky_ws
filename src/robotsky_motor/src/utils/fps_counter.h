@@ -1,12 +1,13 @@
 #pragma once
 
+#include <cstddef>
 #include <chrono>
-#include <vector>
+#include <string>
 
 class FPSCounter
 {
 public:
-    explicit FPSCounter(bool print_info = false);
+    explicit FPSCounter(bool print_info = false, std::string label = "loop", double report_interval_sec = 1.0);
     ~FPSCounter() = default;
 
     void start();
@@ -15,17 +16,18 @@ public:
     bool print_info = false;
 
 private:
-    using Clock     = std::chrono::high_resolution_clock;
+    using Clock     = std::chrono::steady_clock;
     using TimePoint = Clock::time_point;
     using Duration  = std::chrono::duration<double>;
 
-    static constexpr int kNumIterations = 1000;
-    const int _num_iterations           = kNumIterations;
+    void reset_window(const TimePoint& now);
 
-    std::vector<double> _freqs;
-
-    uint64_t _index = 0;
-    uint64_t _count = 0;
-
-    TimePoint _prev;
+    std::string _label;
+    double      _report_interval_sec = 1.0;
+    std::size_t _sample_count        = 0;
+    double      _sum_freq            = 0.0;
+    double      _sum_sq_freq         = 0.0;
+    bool        _has_prev            = false;
+    TimePoint   _prev{};
+    TimePoint   _window_start{};
 };

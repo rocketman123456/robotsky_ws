@@ -16,7 +16,7 @@ def generate_launch_description() -> LaunchDescription:
             ),
             DeclareLaunchArgument(
                 "linear_scale",
-                default_value="0.8",
+                default_value="1.0",
                 description="Scale for linear.x / linear.y from sticks",
             ),
             DeclareLaunchArgument(
@@ -33,6 +33,11 @@ def generate_launch_description() -> LaunchDescription:
                 "cmd_vel_topic",
                 default_value="/cmd_vel",
                 description="Output Twist topic",
+            ),
+            DeclareLaunchArgument(
+                "command_timeout",
+                default_value="0.25",
+                description="Publish zero cmd_vel if no Joy message arrives within this many seconds",
             ),
             Node(
                 package="joy",
@@ -53,6 +58,7 @@ def generate_launch_description() -> LaunchDescription:
                         "linear_scale": LaunchConfiguration("linear_scale"),
                         "angular_scale": LaunchConfiguration("angular_scale"),
                         "deadzone": LaunchConfiguration("deadzone"),
+                        "command_timeout": LaunchConfiguration("command_timeout"),
                     }
                 ],
             ),

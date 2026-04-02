@@ -41,6 +41,10 @@ add_library(robotsky_motor_lib
   src/utils/fps_counter.cpp
   src/robot/robot.cpp
 )
+target_include_directories(robotsky_motor_lib
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+)
 target_link_libraries(robotsky_motor_lib
   spdlog::spdlog
   Eigen3::Eigen
@@ -52,87 +56,62 @@ ament_target_dependencies(robotsky_motor_lib
   sensor_msgs
 )
 
+function(configure_motor_target target_name)
+  target_link_libraries(${target_name}
+    spdlog::spdlog
+    Eigen3::Eigen
+    robotsky_motor_lib
+  )
+  ament_target_dependencies(${target_name}
+    rclcpp
+    robotsky_interface
+    std_msgs
+    sensor_msgs
+  )
+endfunction()
+
 add_executable(robot_node
   src/robot_node.cpp
 )
-target_link_libraries(robot_node
-  ${catkin_LIBRARIES}
-  spdlog::spdlog
-  Eigen3::Eigen
-  robotsky_motor_lib
-)
+configure_motor_target(robot_node)
 
 add_executable(robot_control_node
   src/robot_control_node.cpp
 )
-target_link_libraries(robot_control_node
-  ${catkin_LIBRARIES}
-  spdlog::spdlog
-  Eigen3::Eigen
-  robotsky_motor_lib
-)
+configure_motor_target(robot_control_node)
 
 add_executable(motor_control_test
   src/test/motor_control_test.cpp
 )
-target_link_libraries(motor_control_test
-  ${catkin_LIBRARIES}
-  spdlog::spdlog
-  Eigen3::Eigen
-  robotsky_motor_lib
-)
+configure_motor_target(motor_control_test)
 
 add_executable(motor_control_test_2
   src/test/motor_control_test_2.cpp
 )
-target_link_libraries(motor_control_test_2
-  ${catkin_LIBRARIES}
-  spdlog::spdlog
-  Eigen3::Eigen
-  robotsky_motor_lib
-)
+configure_motor_target(motor_control_test_2)
 
 add_executable(motor_control_test_rs
   src/test/motor_control_test_rs.cpp
 )
-target_link_libraries(motor_control_test_rs
-  ${catkin_LIBRARIES}
-  spdlog::spdlog
-  Eigen3::Eigen
-  robotsky_motor_lib
-)
+configure_motor_target(motor_control_test_rs)
 
 add_executable(motor_control_test_dm
   src/test/motor_control_test_dm.cpp
 )
-target_link_libraries(motor_control_test_dm
-  ${catkin_LIBRARIES}
-  spdlog::spdlog
-  Eigen3::Eigen
-  robotsky_motor_lib
-)
+configure_motor_target(motor_control_test_dm)
 
 add_executable(motor_zero_test_rs
   src/test/motor_zero_test_rs.cpp
 )
-target_link_libraries(motor_zero_test_rs
-  ${catkin_LIBRARIES}
-  spdlog::spdlog
-  Eigen3::Eigen
-  robotsky_motor_lib
-)
+configure_motor_target(motor_zero_test_rs)
 
 add_executable(motor_zero_test_dm
   src/test/motor_zero_test_dm.cpp
 )
-target_link_libraries(motor_zero_test_dm
-  ${catkin_LIBRARIES}
-  spdlog::spdlog
-  Eigen3::Eigen
-  robotsky_motor_lib
-)
+configure_motor_target(motor_zero_test_dm)
 
 install(TARGETS
+  robotsky_motor_lib
   robot_node
   robot_control_node
   motor_control_test_dm
@@ -141,7 +120,9 @@ install(TARGETS
   motor_control_test_2
   motor_zero_test_rs
   motor_zero_test_dm
-  DESTINATION lib/${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
 install(

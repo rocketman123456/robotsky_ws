@@ -9,26 +9,21 @@ int main(int argc, char** argv)
 {
     rclcpp::init(argc, argv);
 
-    std::shared_ptr<FDILink::AhrsBringup> imu = std::make_shared<FDILink::AhrsBringup>();
-    imu->initialize();
-
     try
     {
-        // rclcpp::Rate loop_rate(100);
+        std::shared_ptr<FDILink::AhrsBringup> imu = std::make_shared<FDILink::AhrsBringup>();
+        imu->initialize();
+
         while (rclcpp::ok())
         {
             imu->processLoop();
-
             rclcpp::spin_some(imu);
-            // loop_rate.sleep();
         }
     }
-    catch(std::runtime_error& e)
+    catch (const std::exception& e)
     {
-        spdlog::warn("runtime error!");
+        spdlog::error("imu_node exited with error: {}", e.what());
     }
-
-    // rclcpp::spin(imu);
 
     rclcpp::shutdown();
     return 0;

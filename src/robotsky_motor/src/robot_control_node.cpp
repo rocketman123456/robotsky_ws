@@ -92,7 +92,7 @@ void prepare_hardware()
     std::vector<MotorInitInfo>  motor_infos   = prepare_motor();
     std::vector<CanBusInitInfo> can_bus_infos = prepare_can_bus();
 
-    for (int i = 0; i < motor_infos.size(); ++i)
+    for (std::size_t i = 0; i < motor_infos.size(); ++i)
     {
         data->motor_states.push_back(std::make_shared<MotorState>());
         data->motor_cmds.push_back(std::make_shared<MotorCmd>());
@@ -123,6 +123,12 @@ void prepare_hardware()
 
 void motor_cmd_callback(const robotsky_interface::msg::MotorCmds::SharedPtr cmd)
 {
+    if (cmd->cmds.size() < motor_count)
+    {
+        spdlog::error("cmd->cmds.size() < motor_count");
+        return;
+    }
+
     for (int i = 0; i < motor_count; ++i)
     {
         data->motor_cmds[i]->pos = cmd->cmds[i].pos;
@@ -258,7 +264,7 @@ int main(int argc, char** argv)
     auto native_handle = *reinterpret_cast<std::thread::native_handle_type*>(&thread_id);
     set_thread(0, native_handle);
 
-    FPSCounter fps_counter;
+    FPSCounter fps_counter(true, "motor_control_node");
     fps_counter.start();
 
     float dt         = 0.0;
@@ -312,6 +318,8 @@ int main(int argc, char** argv)
             joint_state_pub->publish(motor_states);
 
             rclcpp::spin_some(robot);
+
+            fps_counter.update();
 
             std::this_thread::sleep_until(next_time);
             next_time += interval;
@@ -389,6 +397,8 @@ int main(int argc, char** argv)
             {
                 break;
             }
+
+            fps_counter.update();
 
             std::this_thread::sleep_until(next_time);
             next_time += interval;
