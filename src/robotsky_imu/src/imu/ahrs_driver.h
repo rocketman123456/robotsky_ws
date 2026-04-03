@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BASE_DRIVER_H_
+#define BASE_DRIVER_H_
 
 #include "imu/fdilink_data_struct.h"
 
@@ -13,25 +14,27 @@
 
 #include <Eigen/Eigen>
 #include <Eigen/Geometry>
+#include <Eigen/src/Core/Matrix.h>
 
+// http://wjwwood.io/serial/doc/1.1.0/index.html
 #include <serial/serial.h>
 #include <string>
 
 namespace FDILink
 {
-constexpr uint8_t FRAME_HEAD        = 0xfc;
-constexpr uint8_t FRAME_END         = 0xfd;
-constexpr uint8_t TYPE_IMU          = 0x40;
-constexpr uint8_t TYPE_AHRS         = 0x41;
-constexpr uint8_t TYPE_INSGPS       = 0x42;
-constexpr uint8_t TYPE_GEODETIC_POS = 0x5c;
-constexpr uint8_t TYPE_GROUND       = 0xf0;
-constexpr uint8_t IMU_LEN           = 0x38; // 56
-constexpr uint8_t AHRS_LEN          = 0x30; // 48
-constexpr uint8_t INSGPS_LEN        = 0x48; // 72
-constexpr uint8_t GEODETIC_POS_LEN  = 0x20; // 32
-constexpr double  PI                = 3.141592653589793;
-constexpr double  DEG_TO_RAD        = 0.017453292519943295;
+#define FRAME_HEAD 0xfc
+#define FRAME_END 0xfd
+#define TYPE_IMU 0x40
+#define TYPE_AHRS 0x41
+#define TYPE_INSGPS 0x42
+#define TYPE_GEODETIC_POS 0x5c
+#define TYPE_GROUND 0xf0
+#define IMU_LEN 0x38          // 56
+#define AHRS_LEN 0x30         // 48
+#define INSGPS_LEN 0x48       // 72
+#define GEODETIC_POS_LEN 0x20 // 32
+#define PI 3.141592653589793
+#define DEG_TO_RAD 0.017453292519943295
 
     class AhrsBringup : public rclcpp::Node
     {
@@ -91,5 +94,7 @@ constexpr double  DEG_TO_RAD        = 0.017453292519943295;
         rclcpp::Publisher<geometry_msgs::msg::Pose2D>::SharedPtr  _mag_pose_pub;
 
         std::shared_ptr<tf2_ros::TransformBroadcaster> _tf_broadcaster;
-    }; // class AhrsBringup
+    }; // ahrsBringup
 } // namespace FDILink
+
+#endif
