@@ -635,9 +635,10 @@ namespace FDILink
 
             // convert imu frame into body frame
             Eigen::Quaterniond quat(imu_data.orientation.w, imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z);
-            Eigen::Quaterniond delta_rot;
-            delta_rot = _rot * _init_rot.conjugate();
-            // quat      = quat * delta_rot;
+            // `_rot` is the fixed IMU->body mounting rotation, while `_init_rot`
+            // removes the initial yaw from the world frame. Gyro data is already
+            // expressed in the sensor/body-local frame, so only the right-side
+            // child-frame rotation should be applied to angular velocity.
             quat = quat * _rot; // * rot.conjugate();
             quat = _init_rot.conjugate() * quat;
 
@@ -659,7 +660,7 @@ namespace FDILink
             // transform angular_velocity into body frame
             Eigen::Vector3d w;
             w << imu_data.angular_velocity.x, imu_data.angular_velocity.y, imu_data.angular_velocity.z;
-            w = delta_rot.toRotationMatrix().transpose() * w;
+            w = _rot.toRotationMatrix().transpose() * w;
 
             imu_data.angular_velocity.x = w[0];
             imu_data.angular_velocity.y = w[1];

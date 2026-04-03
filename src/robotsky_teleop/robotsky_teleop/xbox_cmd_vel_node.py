@@ -125,7 +125,7 @@ class XboxCmdVelNode(Node):
         # Left: xy velocity (ROS: x forward, y left)
         out = Twist()
         out.linear.x = self._linear_scale * ly
-        out.linear.y = self._linear_scale * lx
+        out.linear.y = self._linear_scale * lx * 0.5
         out.linear.z = 0.0
 
         # Right: yaw rate + optional extra forward/back on linear.x

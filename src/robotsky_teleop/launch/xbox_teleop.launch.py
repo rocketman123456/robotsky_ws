@@ -16,12 +16,12 @@ def generate_launch_description() -> LaunchDescription:
             ),
             DeclareLaunchArgument(
                 "linear_scale",
-                default_value="1.0",
+                default_value="0.6",
                 description="Scale for linear.x / linear.y from sticks",
             ),
             DeclareLaunchArgument(
                 "angular_scale",
-                default_value="1.0",
+                default_value="0.8",
                 description="Scale for angular.z from right stick",
             ),
             DeclareLaunchArgument(
