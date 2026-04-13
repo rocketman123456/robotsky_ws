@@ -198,10 +198,10 @@ class RLControllerNode(Node):
             1.0, 1.0, 1.0, 1.0,
         ]
         default_joint_pos = [
-            0.4, -0.5, 1.0, 0.0,  # RF
-            -0.4, -0.5, 1.0, 0.0,  # LF
-            0.4, 0.5, -1.0, 0.0,  # RB
-            -0.4, 0.5, -1.0, 0.0,  # LB
+            0.3, -0.5, 1.0, 0.0,  # RF
+            -0.3, -0.5, 1.0, 0.0,  # LF
+            0.3, 0.5, -1.0, 0.0,  # RB
+            -0.3, 0.5, -1.0, 0.0,  # LB
         ]
         # fmt:off
         self.declare_parameter("kp", default_kp)

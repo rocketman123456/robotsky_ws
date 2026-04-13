@@ -31,12 +31,12 @@ int main(int argc, char** argv)
 
     // uint16_t can_ids[]    = {0x02, 0x03};
     // uint16_t can_indexs[] = {0, 0};
-    // uint16_t can_ids[]    = {0x06, 0x07};
-    // uint16_t can_indexs[] = {0, 0};
+    uint16_t can_ids[]    = {0x06, 0x07};
+    uint16_t can_indexs[] = {0, 0};
     // uint16_t can_ids[]    = {0x0a, 0x0b};
     // uint16_t can_indexs[] = {1, 1};
-    uint16_t can_ids[]    = {0x0e, 0x0f};
-    uint16_t can_indexs[] = {1, 1};
+    // uint16_t can_ids[]    = {0x0e, 0x0f};
+    // uint16_t can_indexs[] = {1, 1};
 
     uint16_t motor_count = 2;
 

@@ -6,6 +6,7 @@
 #include <linux/can/error.h>
 #include <linux/can/raw.h>
 
+#include <cstddef>
 #include <stdio.h>
 #include <string>
 #include <vector>
@@ -19,8 +20,8 @@ public:
     void initialize(const CanInitInfo& infos);
     void finalize();
 
-    void send(can_frame& frame);
-    void receive(can_frame& frame);
+    bool send(const can_frame& frame);
+    bool receive(can_frame& frame);
 
 private:
     const size_t k_can_size = sizeof(struct can_frame);

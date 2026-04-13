@@ -73,7 +73,14 @@ class SimManager(Node):
         self.pub_sim_state = self.create_publisher(Bool, "/pause_flag", 10)
 
         timer_period = 1.0 / 500.0  # seconds
+        self._timer_period = timer_period
         self.timer = self.create_timer(timer_period, self.step)
+
+        # MuJoCo: publish /robotsky_imu at 200 Hz to match real robot IMU; motor_states stay 500 Hz.
+        self._imu_pub_period_s: float | None = None
+        self._imu_pub_accum = 0.0
+        if sim_cfg.simulator_type == "mujoco":
+            self._imu_pub_period_s = 1.0 / 200.0
 
     def is_running(self):
         return self.sim.is_running()
@@ -172,4 +179,10 @@ class SimManager(Node):
         self._pub_pause_flag()
         self._pub_motor_state(t, qp, qv)
         self._pub_motor_state_rviz(t, qp, qv)
-        self._pub_imu(t, quat, gyro, acc)
+        if self._imu_pub_period_s is None:
+            self._pub_imu(t, quat, gyro, acc)
+        else:
+            self._imu_pub_accum += self._timer_period
+            if self._imu_pub_accum >= self._imu_pub_period_s:
+                self._imu_pub_accum -= self._imu_pub_period_s
+                self._pub_imu(t, quat, gyro, acc)

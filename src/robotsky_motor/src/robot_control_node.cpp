@@ -194,10 +194,10 @@ int main(int argc, char** argv)
         0.0, 0.0, 0.0, 0.0, // LB
     };
     float pos_end[] = {
-        0.4, -0.5,  1.0, 0.0, // RF
-        -0.4, -0.5,  1.0, 0.0, // LF
-        0.4,  0.5, -1.0, 0.0, // RB
-        -0.4,  0.5, -1.0, 0.0, // LB
+        0.0, -0.5,  1.0, 0.0, // RF
+        -0.0, -0.5,  1.0, 0.0, // LF
+        0.0,  0.5, -1.0, 0.0, // RB
+        -0.0,  0.5, -1.0, 0.0, // LB
     };
     float vel[] = {
         0.0, 0.0, 0.0, 0.0, // RF
@@ -246,6 +246,11 @@ int main(int argc, char** argv)
         data->motor_cmds[i]->kd  = kd[i];
     }
 
+    for (auto can_bus : data->can_buses)
+    {
+        can_bus->enable();
+    }
+    // run twice to make sure
     for (auto can_bus : data->can_buses)
     {
         can_bus->enable();

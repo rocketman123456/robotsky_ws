@@ -21,7 +21,7 @@ def generate_launch_description() -> LaunchDescription:
             ),
             DeclareLaunchArgument(
                 "angular_scale",
-                default_value="0.8",
+                default_value="0.6",
                 description="Scale for angular.z from right stick",
             ),
             DeclareLaunchArgument(

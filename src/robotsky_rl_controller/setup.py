@@ -44,6 +44,8 @@ setup(
     entry_points={
         "console_scripts": [
             "rl_controller = robotsky_rl_controller.rl_controller_node:main",
+            "wheel_test = robotsky_rl_controller.wheel_test_node:main",
+            "joint_test = robotsky_rl_controller.joint_test_node:main",
         ],
     },
 )

@@ -14,4 +14,6 @@ public:
 
 private:
     void writeState(uint16_t index, const dm_motor_fb_t& data_fb);
+    void drainPendingFeedback(const std::shared_ptr<CANInterface>& can, const char* phase);
+    bool waitForMotorFeedback(const std::shared_ptr<CANInterface>& can, const std::shared_ptr<MotorControl>& motor, const char* phase);
 };
