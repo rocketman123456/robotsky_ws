@@ -249,3 +249,15 @@ void dm_decode(const can_frame& frame, dm_motor_fb_t& data)
     data.t_mos  = (float)(frame.data[6]);
     data.t_coil = (float)(frame.data[7]);
 }
+
+bool dm_is_feedback_frame(const can_frame& frame, uint16_t motor_id)
+{
+    const canid_t raw_can_id = frame.can_id & CAN_SFF_MASK;
+
+    if (raw_can_id == static_cast<canid_t>(motor_id + DM_MASTER_ID))
+    {
+        return true;
+    }
+
+    return frame.can_dlc > 0 && (frame.data[0] & 0x0F) == (motor_id & 0x0F);
+}

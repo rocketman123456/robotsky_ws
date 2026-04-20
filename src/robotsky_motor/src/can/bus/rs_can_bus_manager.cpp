@@ -18,7 +18,14 @@ void RSCANBusManager::writeState(uint16_t /*index*/, const rs_motor_fb_t& data_f
 {
     if (data_fb.id > 0 && data_fb.id <= data->motor_states.size())
     {
-        uint16_t motor_idx = motor_index_map[data_fb.id];
+        const auto motor_it = motor_index_map.find(data_fb.id);
+        if (motor_it == motor_index_map.end())
+        {
+            spdlog::warn("RSCANBusManager received unmapped motor id {}", data_fb.id);
+            return;
+        }
+
+        const uint16_t motor_idx = motor_it->second;
 
         data->motors[motor_idx]->state.pos = data_fb.pos;
         data->motors[motor_idx]->state.vel = data_fb.vel;
@@ -53,16 +60,29 @@ void RSCANBusManager::enable()
 
         rs_set_motor_parameter(motor->can_tx, motor->id, 0X7005, RS_Move_Control_mode, RS_Set_mode);
 
-        can->send(motor->can_tx);
+        if (!can->send(motor->can_tx))
+        {
+            spdlog::warn("Failed to send RS mode command for motor {}", motor->id);
+            continue;
+        }
         usleep(50);
-        can->receive(motor->can_rx);
+        if (!can->receiveMatching(motor->can_rx, [motor](const can_frame& frame) { return rs_is_feedback_frame(frame, motor->id); }))
+        {
+            spdlog::warn("Timed out waiting for RS mode response from motor {}", motor->id);
+            continue;
+        }
         usleep(50);
 
-        rs_decode(motor->can_tx, data_fb, data_motor);
+        data_fb    = rs_motor_fb_t{};
+        data_motor = rs_data_read_write{};
+        rs_decode(motor->can_rx, data_fb, data_motor);
 
         // spdlog::info("motor {} - pos : {}, vel : {}", data_fb.id, data_fb.pos, data_fb.vel);
 
-        writeState(index, data_fb, data_motor);
+        if (data_fb.id != 0)
+        {
+            writeState(index, data_fb, data_motor);
+        }
     }
 
     for(auto index : motor_indices)
@@ -72,16 +92,29 @@ void RSCANBusManager::enable()
 
         motor->enable();
 
-        can->send(motor->can_tx);
+        if (!can->send(motor->can_tx))
+        {
+            spdlog::warn("Failed to send RS enable for motor {}", motor->id);
+            continue;
+        }
         usleep(50);
-        can->receive(motor->can_rx);
+        if (!can->receiveMatching(motor->can_rx, [motor](const can_frame& frame) { return rs_is_feedback_frame(frame, motor->id); }))
+        {
+            spdlog::warn("Timed out waiting for RS enable response from motor {}", motor->id);
+            continue;
+        }
         usleep(50);
 
-        rs_decode(motor->can_tx, data_fb, data_motor);
+        data_fb    = rs_motor_fb_t{};
+        data_motor = rs_data_read_write{};
+        rs_decode(motor->can_rx, data_fb, data_motor);
 
         // spdlog::info("motor {} - pos : {}, vel : {}", data_fb.id, data_fb.pos, data_fb.vel);
 
-        writeState(index, data_fb, data_motor);
+        if (data_fb.id != 0)
+        {
+            writeState(index, data_fb, data_motor);
+        }
     }
 
     spdlog::info("RSCANBusManager enable finish");
@@ -101,16 +134,29 @@ void RSCANBusManager::disable()
 
         motor->disable();
 
-        can->send(motor->can_tx);
+        if (!can->send(motor->can_tx))
+        {
+            spdlog::warn("Failed to send RS disable for motor {}", motor->id);
+            continue;
+        }
         usleep(50);
-        can->receive(motor->can_rx);
+        if (!can->receiveMatching(motor->can_rx, [motor](const can_frame& frame) { return rs_is_feedback_frame(frame, motor->id); }))
+        {
+            spdlog::warn("Timed out waiting for RS disable response from motor {}", motor->id);
+            continue;
+        }
         usleep(50);
 
-        rs_decode(motor->can_tx, data_fb, data_motor);
+        data_fb    = rs_motor_fb_t{};
+        data_motor = rs_data_read_write{};
+        rs_decode(motor->can_rx, data_fb, data_motor);
 
         // spdlog::info("motor {} - pos : {}, vel : {}", data_fb.id, data_fb.pos, data_fb.vel);
 
-        writeState(index, data_fb, data_motor);
+        if (data_fb.id != 0)
+        {
+            writeState(index, data_fb, data_motor);
+        }
     }
 
     spdlog::info("RSCANBusManager disable finish");
@@ -141,15 +187,31 @@ void RSCANBusManager::step()
             cmd->kd
         );
 
-        can->send(motor->can_tx);
+        if (!can->send(motor->can_tx))
+        {
+            spdlog::warn("Failed to send RS command for motor {}", motor->id);
+            continue;
+        }
         usleep(50);
-        can->receive(motor->can_rx);
-        // usleep(50);
+        if (!can->receiveMatching(motor->can_rx, [motor](const can_frame& frame) { return rs_is_feedback_frame(frame, motor->id); }))
+        {
+            spdlog::warn("Timed out waiting for RS feedback from motor {}", motor->id);
+            continue;
+        }
 
+        data_fb    = rs_motor_fb_t{};
+        data_motor = rs_data_read_write{};
         rs_decode(motor->can_rx, data_fb, data_motor);
 
         // spdlog::info("{} motor {} - pos : {}, vel : {}", index, data_fb.id, data_fb.pos, data_fb.vel);
 
-        writeState(index, data_fb, data_motor);
+        if (data_fb.id != 0)
+        {
+            writeState(index, data_fb, data_motor);
+        }
+        else
+        {
+            spdlog::warn("RS feedback decode returned empty motor id for commanded motor {}", motor->id);
+        }
     }
 }

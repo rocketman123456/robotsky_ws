@@ -1,31 +1,31 @@
 #pragma once
 
 #include "can/can_data.h"
+#include "can/can_interface.h"
 
 #include <linux/can.h>
-#include <linux/can/error.h>
-#include <linux/can/raw.h>
-
-#include <stdio.h>
+#include <memory>
 #include <string>
 #include <vector>
 
 class CanDriver
 {
 public:
+    using FrameMatcher = CANInterface::FrameMatcher;
+
     CanDriver()  = default;
     ~CanDriver() = default;
 
     void initialize(const std::vector<CanInitInfo>& infos);
     void finalize();
 
-    void send(int can_index, can_frame& frame);
-    void receive(int can_index, can_frame& frame);
+    bool send(int can_index, const can_frame& frame);
+    bool receive(int can_index, can_frame& frame, int timeout_us = 1000);
+    bool receiveMatching(int can_index, can_frame& frame, const FrameMatcher& matcher, int timeout_us = 5000);
+    bool requestResponse(int can_index, const can_frame& tx, can_frame& rx, const FrameMatcher& matcher, int timeout_us = 5000);
 
     int getSocket(int index);
 
 private:
-    const size_t k_can_size = sizeof(struct can_frame);
-
-    std::vector<int> _sockets;
+    std::vector<std::unique_ptr<CANInterface>> _interfaces;
 };

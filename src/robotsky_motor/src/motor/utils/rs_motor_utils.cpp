@@ -39,10 +39,11 @@ int rs_float_to_uint(float x, float x_min, float x_max, int bits)
     return (int)((x - offset) * ((float)((1 << bits) - 1)) / span);
 }
 
-float rs_byte_to_float(uint8_t* bytedata)
+float rs_byte_to_float(const uint8_t* bytedata)
 {
     uint32_t data       = bytedata[7] << 24 | bytedata[6] << 16 | bytedata[5] << 8 | bytedata[4];
-    float    data_float = *(float*)(&data);
+    float    data_float = 0.0f;
+    std::memcpy(&data_float, &data, sizeof(data_float));
     return data_float;
 }
 
@@ -181,7 +182,7 @@ void rs_decode(const can_frame& frame, rs_motor_fb_t& data, rs_data_read_write& 
     }
     else if (int32_t((frame.can_id & 0x3F000000) >> 24) == 17)
     {
-        for (int index_num = 0; index_num <= 13; index_num++)
+        for (int index_num = 0; index_num <= 14; index_num++)
         {
             if ((frame.data[1] << 8 | frame.data[0]) == RS_Index_List[index_num])
             {
@@ -191,43 +192,46 @@ void rs_decode(const can_frame& frame, rs_motor_fb_t& data, rs_data_read_write& 
                         drw.run_mode.data = uint8_t(frame.data[4]);
                         break;
                     case 1:
-                        drw.iq_ref.data = rs_byte_to_float((uint8_t*)frame.data);
+                        drw.iq_ref.data = rs_byte_to_float(frame.data);
                         break;
                     case 2:
-                        drw.spd_ref.data = rs_byte_to_float((uint8_t*)frame.data);
+                        drw.spd_ref.data = rs_byte_to_float(frame.data);
                         break;
                     case 3:
-                        drw.limit_torque.data = rs_byte_to_float((uint8_t*)frame.data);
+                        drw.limit_torque.data = rs_byte_to_float(frame.data);
                         break;
                     case 4:
-                        drw.cur_kp.data = rs_byte_to_float((uint8_t*)frame.data);
+                        drw.cur_kp.data = rs_byte_to_float(frame.data);
                         break;
                     case 5:
-                        drw.cur_ki.data = rs_byte_to_float((uint8_t*)frame.data);
+                        drw.cur_ki.data = rs_byte_to_float(frame.data);
                         break;
                     case 6:
-                        drw.cur_filt_gain.data = rs_byte_to_float((uint8_t*)frame.data);
+                        drw.cur_filt_gain.data = rs_byte_to_float(frame.data);
                         break;
                     case 7:
-                        drw.loc_ref.data = rs_byte_to_float((uint8_t*)frame.data);
+                        drw.loc_ref.data = rs_byte_to_float(frame.data);
                         break;
                     case 8:
-                        drw.limit_spd.data = rs_byte_to_float((uint8_t*)frame.data);
+                        drw.limit_spd.data = rs_byte_to_float(frame.data);
                         break;
                     case 9:
-                        drw.limit_cur.data = rs_byte_to_float((uint8_t*)frame.data);
+                        drw.limit_cur.data = rs_byte_to_float(frame.data);
                         break;
                     case 10:
-                        drw.mech_pos.data = rs_byte_to_float((uint8_t*)frame.data);
+                        drw.mech_pos.data = rs_byte_to_float(frame.data);
                         break;
                     case 11:
-                        drw.iqf.data = rs_byte_to_float((uint8_t*)frame.data);
+                        drw.iqf.data = rs_byte_to_float(frame.data);
                         break;
                     case 12:
-                        drw.mech_vel.data = rs_byte_to_float((uint8_t*)frame.data);
+                        drw.mech_vel.data = rs_byte_to_float(frame.data);
                         break;
                     case 13:
-                        drw.vbus.data = rs_byte_to_float((uint8_t*)frame.data);
+                        drw.vbus.data = rs_byte_to_float(frame.data);
+                        break;
+                    case 14:
+                        drw.rotation.data = rs_byte_to_float(frame.data);
                         break;
                 }
             }
@@ -237,4 +241,16 @@ void rs_decode(const can_frame& frame, rs_motor_fb_t& data, rs_data_read_write& 
     {
         data.id = uint8_t((frame.can_id & 0xFF00) >> 8);
     }
+}
+
+bool rs_is_feedback_frame(const can_frame& frame, uint16_t motor_id)
+{
+    if ((frame.can_id & CAN_EFF_FLAG) == 0U)
+    {
+        return false;
+    }
+
+    const uint32_t raw_can_id     = frame.can_id & CAN_EFF_MASK;
+    const uint16_t feedback_motor = static_cast<uint16_t>((raw_can_id >> 8) & 0xFFU);
+    return feedback_motor == motor_id;
 }

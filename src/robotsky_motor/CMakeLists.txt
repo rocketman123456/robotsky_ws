@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.8)
 project(robotsky_motor)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -21,6 +24,8 @@ include_directories(
 )
 
 add_library(robotsky_motor_lib
+  src/can/socket/can_socket.cpp
+  src/can/socket/can_device_collection.cpp
   src/motor/utils/cyber_gear_utils.cpp
   src/motor/utils/lk_motor_utils.cpp
   src/motor/utils/dm_motor_utils.cpp

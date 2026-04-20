@@ -60,18 +60,17 @@ std::vector<CanBusInitInfo> prepare_can_bus()
 {
     std::vector<CanBusInitInfo> can_bus_infos;
 
-    // TODO : 这里需要根据实际情况设置 CPU 核心和 CAN 总线索引
     can_bus_infos.push_back({
         CanType::DM,
         0,
-        {0, 1, 2, 3},
-        {0, 1, 2, 3},
+        {0, 1},
+        {0, 1, 2, 3, 12, 13, 14, 15},
     });
     can_bus_infos.push_back({
         CanType::RS,
         1,
-        {4, 5, 6, 7},
-        {4, 5, 6, 7},
+        {2, 3},
+        {4, 5, 6, 7, 8, 9, 10, 11},
     });
 
     return can_bus_infos;

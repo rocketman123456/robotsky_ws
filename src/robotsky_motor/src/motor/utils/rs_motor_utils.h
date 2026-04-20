@@ -105,7 +105,7 @@ struct rs_motor_fb_t
 
 float rs_uint16_to_float(uint16_t x, float x_min, float x_max, int bits);
 int   rs_float_to_uint(float x, float x_min, float x_max, int bits);
-float rs_byte_to_float(uint8_t* bytedata);
+float rs_byte_to_float(const uint8_t* bytedata);
 
 void rs_enable_motor_mode(can_frame& frame, uint16_t motor_id);
 void rs_disable_motor_mode(can_frame& frame, uint16_t motor_id, uint16_t clear_error);
@@ -117,3 +117,4 @@ void rs_zero_ctrl(can_frame& frame, uint16_t motor_id);
 void rs_save_pos_zero(can_frame& frame, uint16_t motor_id);
 
 void rs_decode(const can_frame& frame, rs_motor_fb_t& data, rs_data_read_write& drw);
+bool rs_is_feedback_frame(const can_frame& frame, uint16_t motor_id);

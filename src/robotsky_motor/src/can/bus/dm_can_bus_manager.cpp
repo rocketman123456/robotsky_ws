@@ -22,7 +22,14 @@ void DMCANBusManager::writeState(uint16_t /*index*/, const dm_motor_fb_t& data_f
 
     if (id < data->motor_states.size())
     {
-        uint16_t motor_idx = motor_index_map[id + 1];
+        const auto motor_it = motor_index_map.find(id + 1);
+        if (motor_it == motor_index_map.end())
+        {
+            spdlog::warn("DMCANBusManager received unmapped motor id {}", id + 1);
+            return;
+        }
+
+        const uint16_t motor_idx = motor_it->second;
 
         data->motors[motor_idx]->state.pos = data_fb.pos;
         data->motors[motor_idx]->state.vel = data_fb.vel;
@@ -47,9 +54,17 @@ void DMCANBusManager::enable()
 
         dm_clear_err(motor->can_tx, motor->id, DM_MIT_MODE);
 
-        can->send(motor->can_tx);
+        if (!can->send(motor->can_tx))
+        {
+            spdlog::warn("Failed to send DM clear_err for motor {}", motor->id);
+            continue;
+        }
         usleep(50);
-        can->receive(motor->can_rx);
+        if (!can->receiveMatching(motor->can_rx, [motor](const can_frame& frame) { return dm_is_feedback_frame(frame, motor->id); }))
+        {
+            spdlog::warn("Timed out waiting for DM clear_err response from motor {}", motor->id);
+            continue;
+        }
         usleep(50);
 
         dm_decode(motor->can_rx, data_fb);
@@ -64,9 +79,17 @@ void DMCANBusManager::enable()
 
         motor->enable();
 
-        can->send(motor->can_tx);
+        if (!can->send(motor->can_tx))
+        {
+            spdlog::warn("Failed to send DM enable for motor {}", motor->id);
+            continue;
+        }
         usleep(50);
-        can->receive(motor->can_rx);
+        if (!can->receiveMatching(motor->can_rx, [motor](const can_frame& frame) { return dm_is_feedback_frame(frame, motor->id); }))
+        {
+            spdlog::warn("Timed out waiting for DM enable response from motor {}", motor->id);
+            continue;
+        }
         usleep(50);
 
         dm_decode(motor->can_rx, data_fb);
@@ -88,9 +111,17 @@ void DMCANBusManager::disable()
 
         motor->disable();
 
-        can->send(motor->can_tx);
+        if (!can->send(motor->can_tx))
+        {
+            spdlog::warn("Failed to send DM disable for motor {}", motor->id);
+            continue;
+        }
         usleep(50);
-        can->receive(motor->can_rx);
+        if (!can->receiveMatching(motor->can_rx, [motor](const can_frame& frame) { return dm_is_feedback_frame(frame, motor->id); }))
+        {
+            spdlog::warn("Timed out waiting for DM disable response from motor {}", motor->id);
+            continue;
+        }
         usleep(50);
 
         dm_decode(motor->can_rx, data_fb);
@@ -126,10 +157,17 @@ void DMCANBusManager::step()
             cmd->kd
         );
 
-        can->send(motor->can_tx);
+        if (!can->send(motor->can_tx))
+        {
+            spdlog::warn("Failed to send DM command for motor {}", motor->id);
+            continue;
+        }
         usleep(50);
-        can->receive(motor->can_rx);
-        // usleep(50);
+        if (!can->receiveMatching(motor->can_rx, [motor](const can_frame& frame) { return dm_is_feedback_frame(frame, motor->id); }))
+        {
+            spdlog::warn("Timed out waiting for DM feedback from motor {}", motor->id);
+            continue;
+        }
 
         dm_decode(motor->can_rx, data_fb);
 

@@ -1,31 +1,34 @@
 #pragma once
 
 #include "can_data.h"
+#include "can/socket/can_socket.h"
 
+#include <functional>
 #include <linux/can.h>
-#include <linux/can/error.h>
-#include <linux/can/raw.h>
-
-#include <stdio.h>
+#include <memory>
 #include <string>
-#include <vector>
 
 class CANInterface
 {
 public:
+    using FrameMatcher = std::function<bool(const can_frame&)>;
+
     CANInterface()  = default;
     ~CANInterface() = default;
 
     void initialize(const CanInitInfo& infos);
     void finalize();
 
-    void send(can_frame& frame);
-    void receive(can_frame& frame);
+    bool send(const can_frame& frame);
+    bool receive(can_frame& frame, int timeout_us = 1000);
+    bool receiveMatching(can_frame& frame, const FrameMatcher& matcher, int timeout_us = 5000);
+    bool requestResponse(const can_frame& tx, can_frame& rx, const FrameMatcher& matcher, int timeout_us = 5000);
+
+    bool isDataAvailable(int timeout_us = 100) const;
+    int  socketFD() const;
 
 private:
-    const size_t k_can_size = sizeof(struct can_frame);
-
     std::string _can_name;
-
-    int _socket_fd;
+    bool        _enable_fd = false;
+    std::unique_ptr<robotsky_motor::canbus::CANSocket> _socket;
 };

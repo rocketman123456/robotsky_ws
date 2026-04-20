@@ -1,56 +1,58 @@
 #include "can/old/can_driver.h"
-#include "can/can_utils.h"
-
-#include <spdlog/spdlog.h>
-
-#include <net/if.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <sys/types.h>
 
 #include <assert.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
 void CanDriver::initialize(const std::vector<CanInitInfo>& infos)
 {
-    for (auto& info : infos)
+    finalize();
+
+    for (const auto& info : infos)
     {
-        // spdlog::debug("can port: {}", info.can_port);
-        auto sockfd = init_can(info.can_port);
-        _sockets.push_back(sockfd);
+        auto can_interface = std::make_unique<CANInterface>();
+        can_interface->initialize(info);
+        _interfaces.push_back(std::move(can_interface));
     }
 }
 
 void CanDriver::finalize()
 {
-    // Close the socket
-    for (auto sockfd : _sockets)
+    for (auto& can_interface : _interfaces)
     {
-        close(sockfd);
+        if (can_interface)
+        {
+            can_interface->finalize();
+        }
     }
+
+    _interfaces.clear();
 }
 
 int CanDriver::getSocket(int index)
 {
-    // Check if index is within bounds
-    // assert(index >= 0 && index < _sockets.size());
-    return _sockets[index];
+    assert(index >= 0 && static_cast<size_t>(index) < _interfaces.size());
+    return _interfaces[index] ? _interfaces[index]->socketFD() : -1;
 }
 
-void CanDriver::send(int can_index, can_frame& frame)
+bool CanDriver::send(int can_index, const can_frame& frame)
 {
-    assert(can_index >= 0 && can_index < _sockets.size() && "can index out of range");
-    int sockfd = getSocket(can_index);
-    write(sockfd, &frame, k_can_size);
+    assert(can_index >= 0 && static_cast<size_t>(can_index) < _interfaces.size() && "can index out of range");
+    return _interfaces[can_index]->send(frame);
 }
 
-void CanDriver::receive(int can_index, can_frame& frame)
+bool CanDriver::receive(int can_index, can_frame& frame, int timeout_us)
 {
-    assert(can_index >= 0 && can_index < _sockets.size() && "can index out of range");
-    int sockfd = getSocket(can_index);
-    read(sockfd, &frame, k_can_size);
+    assert(can_index >= 0 && static_cast<size_t>(can_index) < _interfaces.size() && "can index out of range");
+    return _interfaces[can_index]->receive(frame, timeout_us);
+}
+
+bool CanDriver::receiveMatching(int can_index, can_frame& frame, const FrameMatcher& matcher, int timeout_us)
+{
+    assert(can_index >= 0 && static_cast<size_t>(can_index) < _interfaces.size() && "can index out of range");
+    return _interfaces[can_index]->receiveMatching(frame, matcher, timeout_us);
+}
+
+bool CanDriver::requestResponse(int can_index, const can_frame& tx, can_frame& rx, const FrameMatcher& matcher, int timeout_us)
+{
+    assert(can_index >= 0 && static_cast<size_t>(can_index) < _interfaces.size() && "can index out of range");
+    return _interfaces[can_index]->requestResponse(tx, rx, matcher, timeout_us);
 }
