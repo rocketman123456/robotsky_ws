@@ -12,10 +12,11 @@ namespace
 {
     constexpr int kMaxReceiveAttempts = 8;
     constexpr int kMaxDrainFrames     = 32;
+    constexpr int kFeedbackWaitUs     = 100;
 
     void mark_state_timeout(const std::shared_ptr<RobotData>& data, uint16_t state_index)
     {
-        if (data == nullptr || state_index >= data->motor_states.size())
+        if (data == nullptr || state_index >= data->motor_states.size() || !data->motor_states[state_index])
         {
             return;
         }
@@ -43,7 +44,7 @@ RSCANBusManager::RSCANBusManager()
 
 void RSCANBusManager::writeState(uint16_t /*index*/, const rs_motor_fb_t& data_fb, const rs_data_read_write& /*data_motor*/)
 {
-    if (data_fb.id > 0 && data_fb.id <= data->motor_states.size())
+    if (data_fb.id > 0 && data_fb.id <= data->motor_states.size() && data->motor_states[data_fb.id - 1])
     {
         auto map_it = motor_index_map.find(data_fb.id);
         if (map_it == motor_index_map.end())
@@ -52,7 +53,7 @@ void RSCANBusManager::writeState(uint16_t /*index*/, const rs_motor_fb_t& data_f
             return;
         }
 
-        uint16_t motor_idx = map_it->second;
+        const uint16_t motor_idx = map_it->second;
 
         data->motors[motor_idx]->state.pos = data_fb.pos;
         data->motors[motor_idx]->state.vel = data_fb.vel;
@@ -79,8 +80,13 @@ void RSCANBusManager::drainPendingFeedback(const std::shared_ptr<CANInterface>& 
     can_frame frame {};
     int       drained = 0;
 
-    while (drained < kMaxDrainFrames && can->receive(frame))
+    while (drained < kMaxDrainFrames && can->isDataAvailable())
     {
+        if (!can->receive(frame))
+        {
+            break;
+        }
+
         rs_motor_fb_t      data_fb {};
         rs_data_read_write data_motor {};
         if (!decode_rs_feedback_frame(frame, data_fb, data_motor))
@@ -101,9 +107,14 @@ bool RSCANBusManager::waitForMotorFeedback(const std::shared_ptr<CANInterface>& 
 
     for (int attempt = 0; attempt < kMaxReceiveAttempts; ++attempt)
     {
-        if (!can->receive(frame))
+        if (!can->isDataAvailable(kFeedbackWaitUs))
         {
             usleep(50);
+            continue;
+        }
+
+        if (!can->receive(frame))
+        {
             continue;
         }
 

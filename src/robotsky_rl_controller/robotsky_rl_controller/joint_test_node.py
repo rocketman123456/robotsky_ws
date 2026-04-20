@@ -48,10 +48,10 @@ DEFAULT_KP = np.array(
 DEFAULT_KD = np.ones(NUM_JOINTS, dtype=np.float64)
 DEFAULT_JOINT_POS = np.array(
     [
-        0.3, -0.5, 1.0, 0.0,
-        -0.3, -0.5, 1.0, 0.0,
-        0.3, 0.5, -1.0, 0.0,
-        -0.3, 0.5, -1.0, 0.0,
+        0.0, -0.0, 0.0, 0.0,
+        -0.0, -0.0, 0.0, 0.0,
+        0.0, 0.0, -0.0, 0.0,
+        -0.0, 0.0, -0.0, 0.0,
     ],
     dtype=np.float64,
 )

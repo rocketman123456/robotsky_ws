@@ -3,6 +3,7 @@
 #include "motor/motor_data.h"
 #include "motor/motor_factory.h"
 #include "robot/robot.h"
+#include "robot/robotsky_wheel_leg_hardware.h"
 #include "utils/fps_counter.h"
 #include "utils/utils.h"
 
@@ -21,9 +22,8 @@
 #include <thread>
 
 using namespace std::chrono_literals;
-using Clock     = std::chrono::high_resolution_clock;
-using TimePoint = Clock::time_point;
-using Duration  = std::chrono::duration<double>;
+using Clock    = std::chrono::high_resolution_clock;
+using Duration = std::chrono::duration<double>;
 
 sensor_msgs::msg::JointState         joint_rviz_state;
 robotsky_interface::msg::MotorCmds   motor_cmds;
@@ -31,71 +31,20 @@ robotsky_interface::msg::MotorStates motor_states;
 
 std::shared_ptr<RobotData> data = std::make_shared<RobotData>();
 
-const uint16_t motor_count = 16;
-
-std::vector<CanInitInfo> prepare_can()
-{
-    std::vector<CanInitInfo> can_infos;
-
-    can_infos.push_back({"can0"});
-    can_infos.push_back({"can1"});
-    can_infos.push_back({"can2"});
-    can_infos.push_back({"can3"});
-
-    return can_infos;
-}
-
-std::vector<MotorInitInfo> prepare_motor()
-{
-    std::vector<MotorInitInfo> motor_infos;
-
-    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 0, 0x01, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::DM, MotorMode::VELOCITY, 0, 0x04, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 0, 0x05, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::DM, MotorMode::VELOCITY, 0, 0x08, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-
-    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 1, 0x09, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::DM, MotorMode::VELOCITY, 1, 0x0c, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::DM, MotorMode::POSITION, 1, 0x0d, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::DM, MotorMode::VELOCITY, 1, 0x10, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-
-    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 2, 0x02, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 2, 0x03, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 2, 0x06, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 2, 0x07, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-
-    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 3, 0x0a, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 3, 0x0b, +1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 3, 0x0e, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-    motor_infos.push_back({MotorType::RS, MotorMode::POSITION, 3, 0x0f, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0});
-
-    return motor_infos;
-}
-
-std::vector<CanBusInitInfo> prepare_can_bus()
-{
-    std::vector<CanBusInitInfo> can_bus_infos;
-
-    can_bus_infos.push_back({
-        CanType::DM, 1, {0, 1}, {0, 1, 2, 3, 4, 5, 6, 7}
-    });
-    can_bus_infos.push_back({
-        CanType::RS, 2, {2, 3}, {8, 9, 10, 11, 12, 13, 14, 15}
-    });
-
-    return can_bus_infos;
-}
+constexpr std::size_t motor_count = robotsky::wheel_leg::kMotorCount;
 
 void prepare_hardware()
 {
-    std::vector<CanInitInfo>    can_infos     = prepare_can();
-    std::vector<MotorInitInfo>  motor_infos   = prepare_motor();
-    std::vector<CanBusInitInfo> can_bus_infos = prepare_can_bus();
+    const auto can_infos     = robotsky::wheel_leg::prepareCan();
+    const auto motor_infos   = robotsky::wheel_leg::prepareMotors();
+    const auto can_bus_infos = robotsky::wheel_leg::prepareCanBuses();
 
-    for (std::size_t i = 0; i < motor_infos.size(); ++i)
+    data->motor_states.resize(motor_count);
+    data->motor_cmds.resize(motor_count);
+    for (std::size_t i = 0; i < motor_count; ++i)
     {
-        data->motor_states.push_back(std::make_shared<MotorState>());
-        data->motor_cmds.push_back(std::make_shared<MotorCmd>());
+        data->motor_states[i] = std::make_shared<MotorState>();
+        data->motor_cmds[i]   = std::make_shared<MotorCmd>();
     }
 
     for (const auto& info : can_infos)
@@ -129,7 +78,7 @@ void motor_cmd_callback(const robotsky_interface::msg::MotorCmds::SharedPtr cmd)
         return;
     }
 
-    for (int i = 0; i < motor_count; ++i)
+    for (std::size_t i = 0; i < motor_count; ++i)
     {
         data->motor_cmds[i]->pos = cmd->cmds[i].pos;
         data->motor_cmds[i]->vel = cmd->cmds[i].vel;
@@ -151,93 +100,25 @@ int main(int argc, char** argv)
     joint_rviz_state.position.resize(motor_count);
     joint_rviz_state.velocity.resize(motor_count);
     joint_rviz_state.effort.resize(motor_count);
-    joint_rviz_state.name.resize(motor_count);
-
-    joint_rviz_state.name = {
-        "RF_Roll_Joint",
-        "RF_Hip_Joint",
-        "RF_Knee_Joint",
-        "RF_Wheel_Joint",
-
-        "LF_Roll_Joint",
-        "LF_Hip_Joint",
-        "LF_Knee_Joint",
-        "LF_Wheel_Joint",
-
-        "RB_Roll_Joint",
-        "RB_Hip_Joint",
-        "RB_Knee_Joint",
-        "RB_Wheel_Joint",
-
-        "LB_Roll_Joint",
-        "LB_Hip_Joint",
-        "LB_Knee_Joint",
-        "LB_Wheel_Joint",
-    };
+    joint_rviz_state.name = robotsky::wheel_leg::prepareJointNames();
 
     motor_cmds.cmds.resize(motor_count);
     motor_states.states.resize(motor_count);
 
     prepare_hardware();
 
-    // clang-format off
-    float pos_target[] = {
-        0.0, 0.0, 0.0, 0.0, // RF
-        0.0, 0.0, 0.0, 0.0, // LF
-        0.0, 0.0, 0.0, 0.0, // RB
-        0.0, 0.0, 0.0, 0.0, // LB
-    };
-    float pos[] = {
-        0.0, 0.0, 0.0, 0.0, // RF
-        0.0, 0.0, 0.0, 0.0, // LF
-        0.0, 0.0, 0.0, 0.0, // RB
-        0.0, 0.0, 0.0, 0.0, // LB
-    };
-    float pos_end[] = {
-        0.0, -0.5,  1.0, 0.0, // RF
-        -0.0, -0.5,  1.0, 0.0, // LF
-        0.0,  0.5, -1.0, 0.0, // RB
-        -0.0,  0.5, -1.0, 0.0, // LB
-    };
-    float vel[] = {
-        0.0, 0.0, 0.0, 0.0, // RF
-        0.0, 0.0, 0.0, 0.0, // LF
-        0.0, 0.0, 0.0, 0.0, // RB
-        0.0, 0.0, 0.0, 0.0, // LB
-    };
-    float tau[] = {
-        0.0, 0.0, 0.0, 0.0, // RF
-        0.0, 0.0, 0.0, 0.0, // LF
-        0.0, 0.0, 0.0, 0.0, // RB
-        0.0, 0.0, 0.0, 0.0, // LB
-    };
-    float kp_target[] = {
-        0.0, 0.0, 0.0, 0.0, // RF
-        0.0, 0.0, 0.0, 0.0, // LF
-        0.0, 0.0, 0.0, 0.0, // RB
-        0.0, 0.0, 0.0, 0.0, // LB
-    };
-    float kp[] = {
-        0.0, 0.0, 0.0, 0.0, // RF
-        0.0, 0.0, 0.0, 0.0, // LF
-        0.0, 0.0, 0.0, 0.0, // RB
-        0.0, 0.0, 0.0, 0.0, // LB
-    };
-    float kp_end[] = {
-        20.0, 20.0, 40.0, 0.0, // RF
-        20.0, 20.0, 40.0, 0.0, // LF
-        20.0, 20.0, 40.0, 0.0, // RB
-        20.0, 20.0, 40.0, 0.0, // LB
-    };
-    float kd[] = {
-        1.0, 1.0, 1.0, 1.0, // RF
-        1.0, 1.0, 1.0, 1.0, // LF
-        1.0, 1.0, 1.0, 1.0, // RB
-        1.0, 1.0, 1.0, 1.0, // LB
-    };
-    // clang-format on
+    auto startup   = robotsky::wheel_leg::prepareStartupTargets();
+    auto pos       = startup.pos_begin;
+    auto pos_target = startup.pos_begin;
+    auto pos_end   = startup.pos_hold;
+    auto vel       = startup.vel;
+    auto tau       = startup.tau;
+    auto kp        = startup.kp_begin;
+    auto kp_target = startup.kp_begin;
+    auto kp_end    = startup.kp_hold;
+    auto kd        = startup.kd;
 
-    for (int i = 0; i < motor_count; ++i)
+    for (std::size_t i = 0; i < motor_count; ++i)
     {
         data->motor_cmds[i]->pos = pos[i];
         data->motor_cmds[i]->vel = vel[i];
@@ -250,7 +131,6 @@ int main(int argc, char** argv)
     {
         can_bus->enable();
     }
-    // run twice to make sure
     for (auto can_bus : data->can_buses)
     {
         can_bus->enable();
@@ -261,9 +141,9 @@ int main(int argc, char** argv)
         can_bus->start();
     }
 
-    double frequency_hz = 500;
-    auto   interval     = Duration(1.0 / frequency_hz);
-    auto   next_time    = Clock::now() + interval;
+    const double frequency_hz = 500.0;
+    const auto   interval     = Duration(1.0 / frequency_hz);
+    auto         next_time    = Clock::now() + interval;
 
     auto thread_id     = std::this_thread::get_id();
     auto native_handle = *reinterpret_cast<std::thread::native_handle_type*>(&thread_id);
@@ -272,25 +152,25 @@ int main(int argc, char** argv)
     FPSCounter fps_counter(true, "motor_control_node");
     fps_counter.start();
 
-    float dt         = 0.0;
-    float total_time = 4.0;
+    float dt         = 0.0f;
+    float total_time = 4.0f;
 
     try
     {
-        dt = 0;
+        dt = 0.0f;
         while (true)
         {
-            dt += 0.002;
+            dt += 0.002f;
 
             if (dt < total_time)
             {
-                for (int i = 0; i < motor_count; ++i)
+                for (std::size_t i = 0; i < motor_count; ++i)
                 {
                     pos_target[i] = pos[i] + (pos_end[i] - pos[i]) * (dt / total_time);
                     kp_target[i]  = kp[i] + (kp_end[i] - kp[i]) * (dt / total_time);
                 }
 
-                for (int i = 0; i < motor_count; ++i)
+                for (std::size_t i = 0; i < motor_count; ++i)
                 {
                     data->motor_cmds[i]->pos = pos_target[i];
                     data->motor_cmds[i]->vel = vel[i];
@@ -305,7 +185,7 @@ int main(int argc, char** argv)
             }
 
             joint_rviz_state.header.stamp = robot->now();
-            for (int i = 0; i < motor_count; ++i)
+            for (std::size_t i = 0; i < motor_count; ++i)
             {
                 joint_rviz_state.position[i] = data->motor_states[i]->pos;
                 joint_rviz_state.velocity[i] = data->motor_states[i]->vel;
@@ -314,7 +194,7 @@ int main(int argc, char** argv)
             joint_rviz_pub->publish(joint_rviz_state);
 
             motor_states.header.stamp = robot->now();
-            for (int i = 0; i < motor_count; ++i)
+            for (std::size_t i = 0; i < motor_count; ++i)
             {
                 motor_states.states[i].pos = data->motor_states[i]->pos;
                 motor_states.states[i].vel = data->motor_states[i]->vel;
@@ -330,7 +210,7 @@ int main(int argc, char** argv)
             next_time += interval;
         }
     }
-    catch (std::runtime_error& e)
+    catch (std::runtime_error&)
     {
         spdlog::warn("runtime error!");
     }
@@ -342,7 +222,7 @@ int main(int argc, char** argv)
         while (rclcpp::ok())
         {
             joint_rviz_state.header.stamp = robot->now();
-            for (int i = 0; i < motor_count; ++i)
+            for (std::size_t i = 0; i < motor_count; ++i)
             {
                 joint_rviz_state.position[i] = data->motor_states[i]->pos;
                 joint_rviz_state.velocity[i] = data->motor_states[i]->vel;
@@ -351,7 +231,7 @@ int main(int argc, char** argv)
             joint_rviz_pub->publish(joint_rviz_state);
 
             motor_states.header.stamp = joint_rviz_state.header.stamp;
-            for (int i = 0; i < motor_count; ++i)
+            for (std::size_t i = 0; i < motor_count; ++i)
             {
                 motor_states.states[i].pos = data->motor_states[i]->pos;
                 motor_states.states[i].vel = data->motor_states[i]->vel;
@@ -367,7 +247,7 @@ int main(int argc, char** argv)
             next_time += interval;
         }
     }
-    catch (std::runtime_error& e)
+    catch (std::runtime_error&)
     {
         spdlog::warn("runtime error!");
     }
@@ -376,20 +256,20 @@ int main(int argc, char** argv)
 
     try
     {
-        dt = 0;
+        dt = 0.0f;
         while (true)
         {
-            dt += 0.002;
+            dt += 0.002f;
 
             if (dt < total_time)
             {
-                for (int i = 0; i < motor_count; ++i)
+                for (std::size_t i = 0; i < motor_count; ++i)
                 {
                     pos_target[i] = pos_end[i] + (pos[i] - pos_end[i]) * (dt / total_time);
                     kp_target[i]  = kp_end[i] + (kp[i] - kp_end[i]) * (dt / total_time);
                 }
 
-                for (int i = 0; i < motor_count; ++i)
+                for (std::size_t i = 0; i < motor_count; ++i)
                 {
                     data->motor_cmds[i]->pos = pos_target[i];
                     data->motor_cmds[i]->vel = vel[i];
@@ -409,7 +289,7 @@ int main(int argc, char** argv)
             next_time += interval;
         }
     }
-    catch (std::runtime_error& e)
+    catch (std::runtime_error&)
     {
         spdlog::warn("runtime error!");
     }

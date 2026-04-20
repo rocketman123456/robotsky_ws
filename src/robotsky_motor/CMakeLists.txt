@@ -30,16 +30,17 @@ add_library(robotsky_motor_lib
   src/motor/control/dm_motor_control.cpp
   src/motor/control/cyber_motor_control.cpp
   src/motor/motor_factory.cpp
+  src/can/socket/can_socket.cpp
   src/can/bus/can_bus_manager.cpp
   src/can/bus/dm_can_bus_manager.cpp
   src/can/bus/rs_can_bus_manager.cpp
   src/can/can_bus_factory.cpp
   src/can/can_interface.cpp
-  src/can/can_utils.cpp
   src/can/old/can_driver.cpp
   src/utils/utils.cpp
   src/utils/fps_counter.cpp
   src/robot/robot.cpp
+  src/robot/robotsky_wheel_leg_hardware.cpp
 )
 target_include_directories(robotsky_motor_lib
   PUBLIC

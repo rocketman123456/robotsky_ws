@@ -1,12 +1,11 @@
 #pragma once
 
 #include "can/can_data.h"
+#include "can/can_interface.h"
 
 #include <linux/can.h>
-#include <linux/can/error.h>
-#include <linux/can/raw.h>
 
-#include <stdio.h>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -25,7 +24,5 @@ public:
     int getSocket(int index);
 
 private:
-    const size_t k_can_size = sizeof(struct can_frame);
-
-    std::vector<int> _sockets;
+    std::vector<std::shared_ptr<CANInterface>> _interfaces;
 };

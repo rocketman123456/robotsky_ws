@@ -18,20 +18,44 @@ WHEEL_NAMES = ["RF_Wheel", "LF_Wheel", "RB_Wheel", "LB_Wheel"]
 
 DEFAULT_KP = np.array(
     [
-        20.0, 20.0, 40.0, 0.0,
-        20.0, 20.0, 40.0, 0.0,
-        20.0, 20.0, 40.0, 0.0,
-        20.0, 20.0, 40.0, 0.0,
+        20.0,
+        20.0,
+        40.0,
+        0.0,
+        20.0,
+        20.0,
+        40.0,
+        0.0,
+        20.0,
+        20.0,
+        40.0,
+        0.0,
+        20.0,
+        20.0,
+        40.0,
+        0.0,
     ],
     dtype=np.float64,
 )
 DEFAULT_KD = np.ones(NUM_JOINTS, dtype=np.float64)
 DEFAULT_JOINT_POS = np.array(
     [
-        0.3, -0.5, 1.0, 0.0,
-        -0.3, -0.5, 1.0, 0.0,
-        0.3, 0.5, -1.0, 0.0,
-        -0.3, 0.5, -1.0, 0.0,
+        0.0,
+        -0.0,
+        0.0,
+        0.0,
+        -0.0,
+        -0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.0,
+        0.0,
+        -0.0,
+        0.0,
+        -0.0,
+        0.0,
     ],
     dtype=np.float64,
 )
@@ -74,9 +98,7 @@ class WheelTestNode(Node):
 
         wheel_joint_indices = [int(v) for v in self.get_parameter("wheel_joint_indices").value]
         if len(wheel_joint_indices) != len(WHEEL_NAMES):
-            self.get_logger().warn(
-                f"wheel_joint_indices length={len(wheel_joint_indices)} does not match expected {len(WHEEL_NAMES)}, using defaults"
-            )
+            self.get_logger().warn(f"wheel_joint_indices length={len(wheel_joint_indices)} does not match expected {len(WHEEL_NAMES)}, using defaults")
             wheel_joint_indices = list(WHEEL_JOINT_INDICES)
         self._wheel_joint_indices = wheel_joint_indices
         self._wheel_set = set(self._wheel_joint_indices)
@@ -84,9 +106,7 @@ class WheelTestNode(Node):
 
         wheel_speeds = [float(v) for v in self.get_parameter("wheel_speeds").value]
         if len(wheel_speeds) != len(WHEEL_NAMES):
-            self.get_logger().warn(
-                f"wheel_speeds length={len(wheel_speeds)} does not match expected {len(WHEEL_NAMES)}, using zeros"
-            )
+            self.get_logger().warn(f"wheel_speeds length={len(wheel_speeds)} does not match expected {len(WHEEL_NAMES)}, using zeros")
             wheel_speeds = [0.0] * len(WHEEL_NAMES)
         self._wheel_speed_cmd = np.zeros(NUM_JOINTS, dtype=np.float64)
         for wheel_name, joint_idx, speed in zip(WHEEL_NAMES, self._wheel_joint_indices, wheel_speeds):
@@ -116,9 +136,7 @@ class WheelTestNode(Node):
     def _read_vector_parameter(self, name: str, default_values: np.ndarray) -> np.ndarray:
         values = np.asarray([float(v) for v in self.get_parameter(name).value], dtype=np.float64)
         if values.shape != default_values.shape:
-            self.get_logger().warn(
-                f"{name} length={len(values)} does not match expected {len(default_values)}, using defaults"
-            )
+            self.get_logger().warn(f"{name} length={len(values)} does not match expected {len(default_values)}, using defaults")
             return default_values.copy()
         return values
 
@@ -168,10 +186,8 @@ class WheelTestNode(Node):
                 cmd.pos = 0.0
                 cmd.vel = float(wheel_speed_cmd[i])
             else:
-                hold_pos = float(
-                    self._hold_joint_pos[i] if self._hold_initialized or not self._hold_from_current_state else latest_pos[i]
-                )
-                cmd.pos = hold_pos
+                hold_pos = float(self._hold_joint_pos[i] if self._hold_initialized or not self._hold_from_current_state else latest_pos[i])
+                cmd.pos = 0.0  # hold_pos
                 cmd.vel = 0.0
             cmd.tau = 0.0
             cmd.kp = float(self._kp[i])
@@ -213,9 +229,7 @@ class WheelTestNode(Node):
                 cmd.pos = 0.0
                 cmd.vel = 0.0
             else:
-                hold_pos = float(
-                    self._hold_joint_pos[i] if self._hold_initialized or not self._hold_from_current_state else latest_pos[i]
-                )
+                hold_pos = float(self._hold_joint_pos[i] if self._hold_initialized or not self._hold_from_current_state else latest_pos[i])
                 cmd.pos = hold_pos
                 cmd.vel = 0.0
             cmd.tau = 0.0

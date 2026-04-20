@@ -7,6 +7,19 @@
 
 #include <spdlog/spdlog.h>
 
+namespace
+{
+std::size_t getMotorSlotCount(const std::vector<MotorInitInfo>& motor_infos)
+{
+    std::size_t slot_count = 0;
+    for (const auto& info : motor_infos)
+    {
+        slot_count = std::max(slot_count, static_cast<std::size_t>(info.id));
+    }
+    return slot_count;
+}
+} // namespace
+
 Robot::Robot()
     : Node("robotsky_motor")
 {
@@ -38,29 +51,44 @@ void Robot::initCANBus(const std::vector<CanBusInitInfo>& bus_infos)
 
 void Robot::initMotors(const std::vector<MotorInitInfo>& motor_infos)
 {
-    const auto now = std::chrono::steady_clock::now();
+    const auto        now        = std::chrono::steady_clock::now();
+    const std::size_t slot_count = getMotorSlotCount(motor_infos);
 
-    data->motor_states.reserve(data->motor_states.size() + motor_infos.size());
-    data->motor_cmds.reserve(data->motor_cmds.size() + motor_infos.size());
-
-    for (const auto& info : motor_infos)
+    if (data->motor_states.size() < slot_count)
     {
-        auto motor_state       = std::make_shared<MotorState>();
-        motor_state->mode      = info.mode;
-        motor_state->last_rx_time = now;
-        data->motor_states.push_back(motor_state);
-
-        auto motor_cmd       = std::make_shared<MotorCmd>();
-        motor_cmd->mode      = info.mode;
-        motor_cmd->last_tx_time = now;
-        data->motor_cmds.push_back(motor_cmd);
+        data->motor_states.resize(slot_count);
+    }
+    if (data->motor_cmds.size() < slot_count)
+    {
+        data->motor_cmds.resize(slot_count);
     }
 
     for (const auto& info : motor_infos)
     {
+        if (info.id == 0)
+        {
+            spdlog::warn("Skip motor with invalid id 0 on can{}", info.can_index);
+            continue;
+        }
+
+        const std::size_t slot = static_cast<std::size_t>(info.id - 1);
+
+        auto motor_state = std::make_shared<MotorState>();
+        motor_state->mode         = info.mode;
+        motor_state->last_rx_time = now;
+        data->motor_states[slot]  = motor_state;
+
+        auto motor_cmd = std::make_shared<MotorCmd>();
+        motor_cmd->mode         = info.mode;
+        motor_cmd->last_tx_time = now;
+        data->motor_cmds[slot]  = motor_cmd;
+    }
+
+    data->motors.reserve(data->motors.size() + motor_infos.size());
+    for (const auto& info : motor_infos)
+    {
         auto motor = create_motor_control(info);
         motor->initialize(info);
-
         data->motors.push_back(motor);
     }
 }
@@ -77,7 +105,7 @@ void Robot::initRosInterfaces(std::size_t motor_count)
     );
     motor_cmds_sub_   = create_subscription<robotsky_interface::msg::MotorCmds>(
         "motor_cmds",
-        qos, //rclcpp::SensorDataQoS(),
+        qos,
         std::bind(&Robot::onMotorCmds, this, std::placeholders::_1)
     );
 }
@@ -89,17 +117,21 @@ void Robot::onMotorCmds(const robotsky_interface::msg::MotorCmds::SharedPtr msg)
         return;
     }
 
-    const std::size_t n = std::min<std::size_t>(motor_count_, msg->cmds.size());
+    const std::size_t n   = std::min<std::size_t>(motor_count_, msg->cmds.size());
     const auto        now = std::chrono::steady_clock::now();
     for (std::size_t i = 0; i < n; ++i)
     {
         auto& mc = data->motor_cmds[i];
-        // std::lock_guard<std::mutex> lock(mc->mutex);
-        mc->pos = msg->cmds[i].pos;
-        mc->vel = msg->cmds[i].vel;
-        mc->tau = msg->cmds[i].tau;
-        mc->kp  = msg->cmds[i].kp;
-        mc->kd  = msg->cmds[i].kd;
+        if (!mc)
+        {
+            continue;
+        }
+
+        mc->pos          = msg->cmds[i].pos;
+        mc->vel          = msg->cmds[i].vel;
+        mc->tau          = msg->cmds[i].tau;
+        mc->kp           = msg->cmds[i].kp;
+        mc->kd           = msg->cmds[i].kd;
         mc->last_tx_time = now;
         mc->health       = MotorHealth::OK;
     }
@@ -118,6 +150,11 @@ void Robot::publishMotorStates()
 
     for (std::size_t i = 0; i < motor_count_; ++i)
     {
+        if (!data->motor_states[i])
+        {
+            continue;
+        }
+
         std::lock_guard<std::mutex> lock(data->motor_states[i]->mutex);
         out.states[i].pos = data->motor_states[i]->pos;
         out.states[i].vel = data->motor_states[i]->vel;
@@ -157,8 +194,6 @@ void Robot::mainLoop()
 
     while (running)
     {
-        // rclcpp::spin_some(this);
-        // 等待直到下一个时间点
         std::this_thread::sleep_until(next_time);
         next_time += interval;
     }
@@ -166,7 +201,7 @@ void Robot::mainLoop()
 
 void Robot::updateFromCAN(int motorId, double pos, double vel, double torque)
 {
-    if (motorId < 0 || static_cast<std::size_t>(motorId) >= data->motor_states.size())
+    if (motorId < 0 || static_cast<std::size_t>(motorId) >= data->motor_states.size() || !data->motor_states[motorId])
     {
         spdlog::error("motorId out of range: {}", motorId);
         return;
@@ -184,7 +219,7 @@ void Robot::updateFromCAN(int motorId, double pos, double vel, double torque)
 
 void Robot::updateExternalCommand(int motorId, MotorMode mode)
 {
-    if (motorId < 0 || static_cast<std::size_t>(motorId) >= data->motor_cmds.size())
+    if (motorId < 0 || static_cast<std::size_t>(motorId) >= data->motor_cmds.size() || !data->motor_cmds[motorId])
     {
         spdlog::error("motorId out of range: {}", motorId);
         return;
@@ -201,11 +236,16 @@ void Robot::checkStateTimeouts()
     auto now = std::chrono::steady_clock::now();
     for (auto& motor : data->motor_states)
     {
+        if (!motor)
+        {
+            continue;
+        }
+
         std::lock_guard<std::mutex> lock(motor->mutex);
 
-        double dt = std::chrono::duration<double>(now - motor->last_rx_time).count();
+        const double dt = std::chrono::duration<double>(now - motor->last_rx_time).count();
         if (dt > 0.5)
-        { // 0.5秒没收到反馈，算超时
+        {
             motor->health = MotorHealth::TIMEOUT;
         }
     }
@@ -216,11 +256,16 @@ void Robot::checkCmdTimeouts()
     auto now = std::chrono::steady_clock::now();
     for (auto& motor : data->motor_cmds)
     {
+        if (!motor)
+        {
+            continue;
+        }
+
         std::lock_guard<std::mutex> lock(motor->mutex);
 
-        double dt = std::chrono::duration<double>(now - motor->last_tx_time).count();
+        const double dt = std::chrono::duration<double>(now - motor->last_tx_time).count();
         if (dt > 0.5)
-        { // 0.5秒没收到反馈，算超时
+        {
             motor->health = MotorHealth::TIMEOUT;
         }
     }
@@ -229,11 +274,15 @@ void Robot::checkCmdTimeouts()
 void Robot::tickStateMachine()
 {
     checkStateTimeouts();
-    // checkCmdTimeouts();
 
     bool hasTimeout = false;
     for (auto& motor : data->motor_states)
     {
+        if (!motor)
+        {
+            continue;
+        }
+
         std::lock_guard<std::mutex> lock(motor->mutex);
         if (motor->health == MotorHealth::TIMEOUT)
         {
@@ -241,15 +290,6 @@ void Robot::tickStateMachine()
             break;
         }
     }
-    // for (auto& motor : motor_cmds)
-    // {
-    //     std::lock_guard<std::mutex> lock(motor->mutex);
-    //     if (motor->health == MotorHealth::TIMEOUT)
-    //     {
-    //         hasTimeout = true;
-    //         break;
-    //     }
-    // }
 
     std::lock_guard<std::mutex> lock(data->state_mutex);
     switch (data->state)
@@ -263,7 +303,6 @@ void Robot::tickStateMachine()
                 data->state = RobotState::ERROR;
             break;
         case RobotState::ERROR:
-            // 可尝试恢复
             break;
     }
 

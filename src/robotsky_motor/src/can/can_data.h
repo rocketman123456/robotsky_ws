@@ -11,6 +11,8 @@ using CanType = MotorType;
 struct CanInitInfo
 {
     std::string can_port = "";
+    bool        enable_fd = false;
+    int         rx_timeout_us = 100;
 };
 
 struct CanBusInitInfo
